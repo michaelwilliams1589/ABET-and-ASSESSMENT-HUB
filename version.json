@@ -1,0 +1,32 @@
+{
+  "name": "OSUIT ETDE Assessment & Accreditation Hub",
+  "version": "5.1.0",
+  "release": "Guided Gradebook",
+  "workspace": "abetHubs/etde-main",
+  "firebaseStorageRequired": false,
+  "coreGuarantees": [
+    "All required collections initialized before use",
+    "Missing SLO collection handled safely",
+    "Official ABET mappings initialized before gradebook matching",
+    "Canvas duplicate headers normalized",
+    "Gradebook import records linked to upload ID",
+    "Quantitative and qualitative deletion paths retained",
+    "Fixed safeRows initialization order",
+    "Course-first gradebook workflow",
+    "Course-specific official SLO and assignment guidance"
+  ],
+  "modules": [
+    "Authentication",
+    "Uploads",
+    "ABET Assignment Mapping",
+    "Analytics",
+    "Curriculum",
+    "Syllabus and Semester",
+    "Calendar",
+    "Meeting Notes",
+    "Reports and OneDrive Closeout",
+    "Administration",
+    "System Health",
+    "Help Center"
+  ]
+}

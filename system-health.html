@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>System Health</title>
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="assets/config.js"></script><script src="assets/curriculum-data.js"></script><script src="assets/syllabus-data.js"></script><script src="assets/abet-assignment-mapping.js"></script><script src="assets/app.js"></script><script src="assets/v2-bootstrap.js"></script><script src="assets/help-data.js"></script><script src="assets/guided-help.js"></script><script src="assets/v3-enterprise.js"></script><script src="assets/v4-enterprise.js"></script><script src="assets/v4-mapping.js"></script><script src="assets/v5-core.js"></script>
+</head><body data-version="2">
+<header class="topbar"><div class="brand"><div class="brand-mark">INSTITUTE OF<br>TECHNOLOGY</div><div><h1>OSUIT ETDE Assessment &amp; Accreditation Hub</h1><p>Version 5.1 — Guided Gradebook</p></div></div><div class="userbar"><span data-user-role></span><span data-sync class="status"><span class="dot"></span> Connecting</span><span data-user-email></span><button class="btn secondary" data-action="logout">Sign Out</button></div></header>
+<div class="shell"><aside>
+<a class="navlink" href="dashboard.html">🏠 Dashboard</a>
+<a class="navlink" href="uploads.html">⬆️ Uploads</a>
+<a class="navlink" href="results.html">📊 Results</a>
+<a class="navlink" href="assessment-analytics.html">📈 Assessment Analytics</a>
+<a class="navlink" href="curriculum.html">🎓 Curriculum Planner</a><a class="navlink" href="abet-assignment-mapping.html">🎯 ABET Assignment Mapping</a>
+<a class="navlink" href="syllabus-engine.html">📚 Syllabus & Semester</a>
+<a class="navlink" href="calendar.html">📅 Assessment Calendar</a>
+<a class="navlink" href="reports.html">📄 Reports</a>
+<a class="navlink" href="meeting-notes.html">📝 Meeting Notes</a><a class="navlink" href="help-center.html">❓ Help Center</a>
+<a class="navlink" href="admin.html">⚙️ Administration</a>
+<a class="navlink active" href="system-health.html">🩺 System Health</a>
+</aside><main>
+<div class="page-title"><div><h2>System Health &amp; Backup</h2><p class="muted">Verify Firebase, data structure, deployment files, and create a portable workspace backup.</p></div></div>
+<div class="grid" id="v2HealthMetrics"></div>
+<section class="card"><h3>Diagnostics</h3><div id="v2Diagnostics"></div><div class="actions"><button id="v2RunDiagnostics" class="btn primary">Run Diagnostics</button></div></section>
+<section class="card"><h3>Workspace Backup</h3><p>Export the complete Firestore workspace as a JSON backup before major changes.</p><div class="actions"><button id="v2ExportBackup" class="btn primary">Download Workspace Backup</button><label class="btn outline">Choose Backup to Restore<input id="v2RestoreFile" type="file" accept=".json" hidden></label><button id="v2RestoreBackup" class="btn danger">Restore Selected Backup</button></div><div id="v2BackupStatus"></div></section>
+<section class="card"><h3>Version 5 Stable Core</h3><div id="v5CoreHealth"></div></section><section class="card"><h3>Data Integrity Monitor</h3><div id="v4Integrity"></div><div class="actions"><button id="v4RunIntegrity" class="btn primary">Run Data Integrity Check</button></div></section><section class="card"><h3>Data Collections</h3><div id="v2CollectionCounts"></div></section>
+</main></div></body></html>

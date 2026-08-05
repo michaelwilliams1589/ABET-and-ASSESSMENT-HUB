@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instructor Help Center</title>
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="assets/config.js"></script><script src="assets/curriculum-data.js"></script><script src="assets/syllabus-data.js"></script><script src="assets/abet-assignment-mapping.js"></script><script src="assets/app.js"></script><script src="assets/v2-bootstrap.js"></script><script src="assets/help-data.js"></script><script src="assets/guided-help.js"></script><script src="assets/v3-enterprise.js"></script><script src="assets/v4-enterprise.js"></script><script src="assets/v4-mapping.js"></script><script src="assets/v5-core.js"></script>
+</head><body data-version="2">
+<header class="topbar"><div class="brand"><div class="brand-mark">INSTITUTE OF<br>TECHNOLOGY</div><div><h1>OSUIT ETDE Assessment &amp; Accreditation Hub</h1><p>Version 5.1 — Guided Gradebook</p></div></div><div class="userbar"><span data-user-role></span><span data-sync class="status"><span class="dot"></span> Connecting</span><span data-user-email></span><button class="btn secondary" data-action="logout">Sign Out</button></div></header>
+<div class="shell"><aside>
+<a class="navlink" href="dashboard.html">🏠 Dashboard</a>
+<a class="navlink" href="uploads.html">⬆️ Uploads</a>
+<a class="navlink" href="results.html">📊 Results</a>
+<a class="navlink" href="assessment-analytics.html">📈 Assessment Analytics</a>
+<a class="navlink" href="curriculum.html">🎓 Curriculum Planner</a><a class="navlink" href="abet-assignment-mapping.html">🎯 ABET Assignment Mapping</a>
+<a class="navlink" href="syllabus-engine.html">📚 Syllabus & Semester</a>
+<a class="navlink" href="calendar.html">📅 Assessment Calendar</a>
+<a class="navlink" href="reports.html">📄 Reports</a>
+<a class="navlink" href="meeting-notes.html">📝 Meeting Notes</a>
+<a class="navlink active" href="help-center.html">❓ Help Center</a>
+<a class="navlink admin-only" href="admin.html">⚙️ Administration</a>
+<a class="navlink admin-only" href="system-health.html">🩺 System Health</a>
+</aside><main>
+<div class="page-title"><div><h2>Instructor Help Center</h2><p class="muted">Search by page, task, ABET purpose, or common question.</p></div></div>
+<section class="card"><label>Search Help<input id="helpSearch" placeholder="Example: upload journals, threshold, semester archive, meeting notes"></label></section>
+<section class="card"><h3>Semester Workflow</h3><div class="workflow-strip" id="helpWorkflow"></div></section>
+<section class="card"><h3>Help Topics</h3><div id="helpTopicList"></div></section>
+<section class="card"><h3>Printable Instructor Guide</h3><p>Generate a complete text guide containing all page instructions and the semester workflow.</p><button id="downloadInstructorGuide" class="btn primary">Download Instructor Guide</button></section>
+</main></div></body></html>
