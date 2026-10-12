@@ -3,18 +3,25 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="assets/vendor/jszip.min.js"></script>
 <script src="assets/vendor/xlsx.full.min.js"></script>
-<script src="assets/config.js"></script><script src="assets/curriculum-data.js"></script><script src="assets/syllabus-data.js"></script><script src="assets/abet-assignment-mapping.js"></script><script src="assets/app.js"></script><script src="assets/v2-bootstrap.js"></script><script src="assets/help-data.js"></script><script src="assets/guided-help.js"></script><script src="assets/v3-enterprise.js"></script><script src="assets/v4-enterprise.js"></script><script src="assets/v4-mapping.js"></script><script src="assets/v5-core.js"></script></head><body data-version="2"><header class="topbar">
-<div class="brand"><div class="brand-mark">INSTITUTE OF<br>TECHNOLOGY</div><div><h1>OSUIT ETDE Assessment &amp; Accreditation Hub</h1><p>Version 5.1 — Guided Gradebook</p></div></div>
+<script src="assets/config.js"></script><script src="assets/curriculum-data.js"></script><script src="assets/syllabus-data.js"></script><script src="assets/abet-assignment-mapping.js"></script><script src="assets/app.js"></script><script src="assets/v2-bootstrap.js"></script><script src="assets/help-data.js"></script><script src="assets/guided-help.js"></script><script src="assets/v3-enterprise.js"></script><script src="assets/v4-enterprise.js"></script><script src="assets/v4-mapping.js"></script><script src="assets/v5-core.js"></script><script src="assets/assessment-schedule-data.js"></script><script src="assets/historical-seed.js"></script><script src="assets/v52-features.js"></script></head><body data-version="2"><header class="topbar">
+<div class="brand"><div class="brand-mark">INSTITUTE OF<br>TECHNOLOGY</div><div><h1>OSUIT ETDE Assessment &amp; Accreditation Hub</h1><p>Version 5.2 — Outcomes &amp; Improvement</p></div></div>
 <div class="userbar"><span data-user-role></span><span data-sync class="status"><span class="dot"></span> Connecting</span><span data-user-email></span><button class="btn secondary" data-action="logout">Sign Out</button></div>
-</header><div class="shell"><aside><a class="navlink active" href="dashboard.html">🏠 Dashboard</a>
+</header><div class="shell"><aside><a class="navlink" href="my-courses.html">✅ My Courses</a>
+<a class="navlink active" href="dashboard.html">🏠 Dashboard</a>
 <a class="navlink" href="uploads.html">⬆️ Uploads</a>
 <a class="navlink" href="results.html">📊 Results</a>
-<a class="navlink" href="assessment-analytics.html">📈 Assessment Analytics</a>
-<a class="navlink" href="curriculum.html">🎓 Curriculum Planner</a><a class="navlink" href="abet-assignment-mapping.html">🎯 ABET Assignment Mapping</a>
-<a class="navlink" href="syllabus-engine.html">📚 Syllabus & Semester</a><a class="navlink" href="calendar.html">📅 Assessment Calendar</a>
+<a class="navlink" href="outcomes.html">🎯 Outcomes &amp; Improvement</a>
 <a class="navlink" href="reports.html">📄 Reports</a>
-<a class="navlink" href="meeting-notes.html">📝 Meeting Notes</a><a class="navlink" href="help-center.html">❓ Help Center</a>
-<a class="navlink admin-only" href="admin.html">⚙️ Administration</a><a class="navlink admin-only" href="system-health.html">🩺 System Health</a></aside><main>
+<a class="navlink" href="help-center.html">❓ Help Center</a>
+<details class="nav-advanced"><summary>Advanced tools</summary><a class="navlink" href="assessment-analytics.html">📈 Assessment Analytics</a>
+<a class="navlink" href="curriculum.html">🎓 Curriculum Planner</a>
+<a class="navlink" href="abet-assignment-mapping.html">🗺 ABET Assignment Mapping</a>
+<a class="navlink" href="syllabus-engine.html">📚 Syllabus &amp; Semester</a>
+<a class="navlink" href="calendar.html">📅 Assessment Calendar</a>
+<a class="navlink" href="meeting-notes.html">📝 Meeting Notes</a>
+<a class="navlink admin-only" href="admin.html">⚙️ Administration</a>
+<a class="navlink admin-only" href="system-health.html">🩺 System Health</a>
+</details></aside><main>
 <div class="page-title"><div><h2>Dashboard</h2><p class="muted">One place to see the next required action and overall assessment status.</p></div></div>
 <section id="guidedWelcome" class="guided-welcome hidden"></section><section class="next-step"><div><div class="eyebrow">TODAY'S NEXT STEP</div><h2 id="nextStepTitle">Checking your workspace…</h2><p id="nextStepText"></p></div><a id="nextStepButton" class="btn primary" href="uploads.html">Open Next Step</a></section>
 <div class="grid" id="dashboardMetrics"></div>
