@@ -59,7 +59,7 @@ async function init(){
   auth.onAuthStateChanged(async user=>{
     currentUser=user;
     if(!user&&page()!=="index.html"){goToPage("index.html");return}
-    if(user&&page()==="index.html"){goToPage("dashboard.html");return}
+    if(user&&page()==="index.html"){goToPage(admin()?"dashboard.html":"my-courses.html");return}
     if(!user)return;
     document.querySelectorAll("[data-user-email]").forEach(e=>e.textContent=user.email||"");
     document.querySelectorAll("[data-user-role]").forEach(e=>e.textContent=admin()?"Administrator":"Instructor");
@@ -86,7 +86,7 @@ async function login(){
   button.disabled=true;button.textContent="Signing In…";
   try{
     await auth.signInWithEmailAndPassword(email,password);
-    goToPage("dashboard.html");
+    // onAuthStateChanged sends instructors to My Courses and administrators to the Dashboard.
   }catch(e){
     box.textContent=(e.code==="auth/invalid-credential"||e.code==="auth/wrong-password"||e.code==="auth/user-not-found")?"Incorrect email or password.":"Sign-in failed: "+e.message;
     box.style.display="block";button.disabled=false;button.textContent="Sign In";
@@ -1719,6 +1719,8 @@ function mergeTeachingFromUploads(){
    if(!hub.teachingHistory.some(x=>x.key===key))hub.teachingHistory.push({...a,key,source:"Semester assignment"});
  });
 }
+// v5.2: this helper was called but never defined, which crashed Dashboard and Syllabus & Semester once courses were assigned.
+function currentCycleYearNumber(){return cycleInfo().year}
 function requirementsForAssignment(a){
  const cycle=currentCycleYearNumber();
  const scheduled=[];
@@ -1732,7 +1734,7 @@ function requirementsForAssignment(a){
 }
 function requirementDone(a,r){
  const uploads=(hub.routedUploads||[]).filter(u=>!u.archived&&u.term===a.term&&normalizeCourse(u.courseCode)===a.courseCode&&(!a.section||!u.section||String(u.section).includes(a.section)));
- if(r.type==="quantitative")return (hub.grades||[]).length>0||uploads.some(u=>u.type==="gradebook");
+ if(r.type==="quantitative")return uploads.some(u=>u.type==="gradebook"); // v5.2: was true whenever ANY grade existed anywhere
  if(r.type==="journals")return uploads.some(u=>u.type==="journals");
  if(r.type==="employer")return uploads.some(u=>u.type==="microsoft-forms"||u.type==="reflection");
  if(r.type==="review")return uploads.some(u=>u.resultApproved);
