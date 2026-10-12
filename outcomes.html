@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Outcomes & Improvement</title><link rel="stylesheet" href="assets/styles.css"><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="assets/vendor/jszip.min.js"></script>
+<script src="assets/vendor/xlsx.full.min.js"></script>
+<script src="assets/config.js"></script><script src="assets/curriculum-data.js"></script><script src="assets/syllabus-data.js"></script><script src="assets/abet-assignment-mapping.js"></script><script src="assets/app.js"></script><script src="assets/v2-bootstrap.js"></script><script src="assets/help-data.js"></script><script src="assets/guided-help.js"></script><script src="assets/v3-enterprise.js"></script><script src="assets/v4-enterprise.js"></script><script src="assets/v4-mapping.js"></script><script src="assets/v5-core.js"></script><script src="assets/assessment-schedule-data.js"></script><script src="assets/historical-seed.js"></script><script src="assets/v52-features.js"></script></head><body data-version="2"><header class="topbar">
+<div class="brand"><div class="brand-mark">INSTITUTE OF<br>TECHNOLOGY</div><div><h1>OSUIT ETDE Assessment &amp; Accreditation Hub</h1><p>Version 5.2 — Outcomes &amp; Improvement</p></div></div>
+<div class="userbar"><span data-user-role></span><span data-sync class="status"><span class="dot"></span> Connecting</span><span data-user-email></span><button class="btn secondary" data-action="logout">Sign Out</button></div>
+</header><div class="shell"><aside><a class="navlink" href="my-courses.html">✅ My Courses</a>
+<a class="navlink" href="dashboard.html">🏠 Dashboard</a>
+<a class="navlink" href="uploads.html">⬆️ Uploads</a>
+<a class="navlink" href="results.html">📊 Results</a>
+<a class="navlink active" href="outcomes.html">🎯 Outcomes &amp; Improvement</a>
+<a class="navlink" href="reports.html">📄 Reports</a>
+<a class="navlink" href="help-center.html">❓ Help Center</a>
+<details class="nav-advanced"><summary>Advanced tools</summary><a class="navlink" href="assessment-analytics.html">📈 Assessment Analytics</a>
+<a class="navlink" href="curriculum.html">🎓 Curriculum Planner</a>
+<a class="navlink" href="abet-assignment-mapping.html">🗺 ABET Assignment Mapping</a>
+<a class="navlink" href="syllabus-engine.html">📚 Syllabus &amp; Semester</a>
+<a class="navlink" href="calendar.html">📅 Assessment Calendar</a>
+<a class="navlink" href="meeting-notes.html">📝 Meeting Notes</a>
+<a class="navlink admin-only" href="admin.html">⚙️ Administration</a>
+<a class="navlink admin-only" href="system-health.html">🩺 System Health</a>
+</details></aside><main>
+<div class="page-title"><div><h2>Outcomes &amp; Improvement</h2><p class="muted">Student outcome results by year against the target, continuous-improvement actions, PEO surveys, advisory board, and self-study tables.</p></div></div>
+<div class="tabs actions"><button class="btn outline active" data-oc-tab="summary">📊 Outcome Summary</button><button class="btn outline" data-oc-tab="actions">🔁 Improvement Actions</button><button class="btn outline" data-oc-tab="peo">🧭 PEO Surveys &amp; Advisory Board</button><button class="btn outline" data-oc-tab="exports">📄 Self-Study Tables</button><button class="btn outline admin-only" data-oc-tab="history">🗂 Historical Data</button><button class="btn outline admin-only" data-oc-tab="settings">⚙️ Settings</button></div>
+<div id="oc_summary" class="oc-panel">
+<section class="card"><h3>Student Outcomes SO1–SO5 by Academic Year</h3><div id="soSummary"><div class="notice">Loading…</div></div></section>
+<section class="card"><h3>Scheduled but Missing</h3><p class="muted">Compared with the ABET Assessment Schedule (2023–24 to 2025–26) and the six-year cycle on the Curriculum Planner for later years.</p><div id="soMissing"></div></section>
+<section class="card"><details><summary><strong>Show every result behind the table</strong></summary><div id="soDetail"></div></details></section>
+</div>
+<div id="oc_actions" class="oc-panel hidden">
+<section class="card"><h3>Record an Improvement Action</h3><p class="muted">Close the loop: what you found → what you changed → who owns it → what happened when you re-assessed.</p><input type="hidden" id="caId">
+<div class="form-grid"><label>Student Outcome<select id="caSo"></select></label><label>Owner<input id="caOwner" placeholder="Faculty name"></label><label>Date of change<input id="caDate" type="date"></label><label>Status<select id="caStatus"></select></label></div>
+<label>Finding (what the data showed)<textarea id="caFinding" rows="2"></textarea></label><label>Change made / planned<textarea id="caChange" rows="2"></textarea></label>
+<div class="form-grid"><label>Follow-up result (after re-assessing)<input id="caFollowUp" placeholder="e.g. SO4 rose to 82% in 2026-27"></label><label>Follow-up date<input id="caFollowUpDate" type="date"></label></div>
+<div class="actions"><button id="caSave" class="btn primary">Save Action</button><button id="caClear" class="btn outline">Clear</button></div><div id="caMsg"></div></section>
+<section class="card"><h3>All Actions</h3><label>Show<select id="caFilter"></select></label><div id="caList"></div></section>
+</div>
+<div id="oc_peo" class="oc-panel hidden">
+<section class="card"><h3>Import a PEO Survey (Alumni or Employer)</h3><p class="muted">CSV or Excel. Any column whose header contains PEO1…PEO5 is scored (1–5 numbers or Strongly agree…Strongly disagree). Columns with "comment" in the header are kept as comments. Only totals are saved.</p>
+<div class="form-grid"><label>Survey type<select id="psType"><option value="alumni">Alumni</option><option value="employer">Employer</option><option value="student">Graduating student</option></select></label><label>Survey name<input id="psName" placeholder="e.g. 2026 Alumni Survey"></label><label>Date<input id="psDate" type="date"></label><label>File<input id="psFile" type="file" accept=".csv,.xlsx,.xls"></label></div>
+<div class="actions"><button id="psPreviewBtn" class="btn primary">Preview</button><button id="psTemplate" class="btn outline">Download Template</button></div><div id="psPreview"></div></section>
+<section class="card"><h3>Saved PEO Surveys</h3><div id="psList"></div></section>
+<section class="card"><h3>Advisory Board Meeting</h3><div class="form-grid"><label>Date<input id="abDate" type="date"></label><label>Attendees<input id="abAttendees" placeholder="Names and companies"></label></div>
+<p><strong>PEOs reviewed</strong></p><div id="abPeoChecks"></div>
+<label>PEO review notes<textarea id="abPeoNotes" rows="2" placeholder="Did the board agree the PEOs still fit industry needs?"></textarea></label>
+<label>Recommendations<textarea id="abRecs" rows="2"></textarea></label>
+<label>Link to improvement actions (Ctrl/Cmd-click for several)<select id="abActions" multiple size="4"></select></label>
+<div class="actions"><button id="abSave" class="btn primary">Save Meeting</button></div><div id="abMsg"></div></section>
+<section class="card"><h3>Advisory Board History</h3><div id="abList"></div></section>
+</div>
+<div id="oc_exports" class="oc-panel hidden">
+<section class="card"><h3>Self-Study Tables</h3><p>Download the tables as a real Excel workbook (one sheet per table) or a Word document you can paste from.</p><ul><li>Table 3-1: Student Outcome to Course map (from the Curriculum Planner)</li><li>Table 4-1: Outcome summary by year vs. target</li><li>Table 4-2: Every assessment result (course, tool, assessed, met, %)</li><li>Table 2-1: PEO to Student Outcome map</li><li>Improvement actions, advisory board meetings, PEO survey results</li></ul>
+<div class="actions"><button id="exportXlsx" class="btn primary">Download Excel (.xlsx)</button><button id="exportDocx" class="btn primary">Download Word (.docx)</button></div></section>
+</div>
+<div id="oc_history" class="oc-panel hidden">
+<section class="card"><h3>Import Historical Results</h3><div id="histSeed"></div></section>
+<section class="card"><h3>Imported Historical Results</h3><p class="muted">Fill in blanks (for example the SO 3 success counts) and save.</p><div id="histMine"></div></section>
+</div>
+<div id="oc_settings" class="oc-panel hidden"><section class="card"><h3>Program Settings</h3><div id="v52Settings"></div></section></div>
+</main></div></body></html>
