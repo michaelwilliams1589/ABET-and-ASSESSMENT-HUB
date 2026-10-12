@@ -1,7 +1,7 @@
 {
   "name": "OSUIT ETDE Assessment & Accreditation Hub",
-  "version": "5.1.0",
-  "release": "Guided Gradebook",
+  "version": "5.2.0",
+  "release": "Outcomes & Improvement",
   "workspace": "abetHubs/etde-main",
   "firebaseStorageRequired": false,
   "coreGuarantees": [
@@ -27,6 +27,8 @@
     "Reports and OneDrive Closeout",
     "Administration",
     "System Health",
-    "Help Center"
+    "Help Center",
+    "My Courses",
+    "Outcomes & Improvement"
   ]
 }
