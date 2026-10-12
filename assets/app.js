@@ -45,7 +45,22 @@ const page=()=>{
   return /\.html$/i.test(last)?last:"index.html";
 };
 const goToPage=file=>{ location.assign(new URL(file, location.href).href); };
-const admin=()=>cfg.adminEmails.map(x=>x.toLowerCase()).includes((currentUser?.email||"").toLowerCase());
+// v5.3: the role comes from the approved-users list (hubUsers/{email}) in Firestore, which the security rules
+// also enforce. The adminEmails list in config.js is only used before that list exists.
+let accessRecord=null,accessSource="config";
+const admin=()=>accessSource==="hubUsers"?accessRecord?.role==="admin":cfg.adminEmails.map(x=>x.toLowerCase()).includes((currentUser?.email||"").toLowerCase());
+async function loadAccess(user){
+  accessRecord=null;accessSource="config";
+  try{
+    const snap=await db.collection("hubUsers").doc(String(user.email||"").toLowerCase()).get();
+    accessSource="hubUsers";accessRecord=snap.exists?snap.data():null;
+    return !!(accessRecord&&accessRecord.active===true);
+  }catch(e){
+    // Permission denied here means the new rules are not deployed yet; keep the old behaviour.
+    if(e.code==="permission-denied"){accessSource="config";return true}
+    throw e;
+  }
+}
 const normalizeCourse=s=>{const m=String(s||"").toUpperCase().match(/\b(ETDE|ETD|ETDG)\s*[-_]?\s*(\d{4})\b/);return m?`${m[1]} ${m[2]}`:""};
 const sectionFrom=s=>{const t=String(s||"");const m=t.match(/\b(?:SECTION|SEC|CRN)\s*[-_:]?\s*(\d{4,6})\b/i);if(m)return m[1];return (t.match(/\b\d{5}\b/)||[""])[0]};
 const currentAcademicStart=()=>new Date().getMonth()>=6?new Date().getFullYear():new Date().getFullYear()-1;
@@ -55,10 +70,26 @@ const download=(name,text,type="text/plain")=>{const a=document.createElement("a
 async function init(){
   if(!firebase.apps.length)firebase.initializeApp(cfg.firebase);
   auth=firebase.auth();db=firebase.firestore();
+  db.settings({ignoreUndefinedProperties:true});
+  if(window.ABET_TEST_EMULATOR){ // automated tests only: talk to the local Firebase emulator, never the live project
+    const [h,p]=window.ABET_TEST_EMULATOR.firestore.split(":");db.useEmulator(h,Number(p));
+    auth.useEmulator("http://"+window.ABET_TEST_EMULATOR.auth,{disableWarnings:true});
+  }
   bindStatic();
+  auth.getRedirectResult?.().catch(e=>showLoginError(signInErrorText(e)));
   auth.onAuthStateChanged(async user=>{
     currentUser=user;
     if(!user&&page()!=="index.html"){goToPage("index.html");return}
+    if(user){
+      let ok=true;
+      try{ok=await loadAccess(user)}catch(e){console.error(e)}
+      if(!ok){
+        await auth.signOut();
+        if(page()!=="index.html"){goToPage("index.html?denied=1");return}
+        showLoginError("Your account ("+(user.email||"no email")+") is not on the approved list yet. Use Request Faculty Access below.");
+        return;
+      }
+    }
     if(user&&page()==="index.html"){goToPage(admin()?"dashboard.html":"my-courses.html");return}
     if(!user)return;
     document.querySelectorAll("[data-user-email]").forEach(e=>e.textContent=user.email||"");
@@ -66,6 +97,7 @@ async function init(){
     document.querySelectorAll(".admin-only").forEach(e=>e.style.display=admin()?"":"none");
     if(page()==="admin.html"&&!admin()){location.href="dashboard.html";return}
     await loadHub();
+    window.HubStore?.takeSnapshot(hub);
     await routePage();
     window.__hubReady=true;
     document.dispatchEvent(new CustomEvent("hub:loaded"));
@@ -77,6 +109,41 @@ function bindStatic(){
   ["loginEmail","loginPassword"].forEach(idn=>$(idn)?.addEventListener("keydown",e=>{if(e.key==="Enter")login()}));
   $("requestAccessButton")?.addEventListener("click",()=>$("accessPanel").classList.toggle("hidden"));
   $("sendAccessRequest")?.addEventListener("click",requestAccess);
+  $("microsoftSignInButton")?.addEventListener("click",signInMicrosoft);
+  $("forgotPasswordLink")?.addEventListener("click",e=>{e.preventDefault();resetPassword()});
+  if(cfg.microsoft?.enabled===false)$("microsoftSignInButton")?.classList.add("hidden");
+  if(/[?&]denied=1/.test(location.search))showLoginError("Your account is not on the approved list yet. Use Request Faculty Access below.");
+}
+function showLoginError(msg,ok){const box=$("loginError");if(!box)return;box.textContent=msg;box.style.display="block";box.classList.toggle("success",!!ok)}
+function signInErrorText(e){
+  const c=e?.code||"";
+  if(c==="auth/invalid-credential"||c==="auth/wrong-password"||c==="auth/user-not-found")return "Incorrect email or password.";
+  if(c==="auth/popup-closed-by-user"||c==="auth/cancelled-popup-request")return "The Microsoft sign-in window was closed before finishing.";
+  if(c==="auth/account-exists-with-different-credential")return "This email already has a password account. Sign in with email and password.";
+  if(c==="auth/operation-not-allowed")return "Microsoft sign-in has not been turned on in Firebase yet. Use email and password for now.";
+  if(c==="auth/too-many-requests")return "Too many attempts. Wait a few minutes and try again.";
+  return "Sign-in failed: "+(e?.message||e);
+}
+// v5.3: "Sign in with Microsoft" (OSU Microsoft 365). Tenant is set in config.js (microsoft.tenant).
+async function signInMicrosoft(){
+  const provider=new firebase.auth.OAuthProvider("microsoft.com");
+  const params={prompt:"select_account"};
+  if(cfg.microsoft?.tenant)params.tenant=cfg.microsoft.tenant;
+  if(cfg.microsoft?.loginHint)params.login_hint=cfg.microsoft.loginHint;
+  provider.setCustomParameters(params);
+  provider.addScope("email");
+  try{await auth.signInWithPopup(provider)}
+  catch(e){
+    if(e.code==="auth/popup-blocked"){await auth.signInWithRedirect(provider);return}
+    showLoginError(signInErrorText(e));
+  }
+}
+// v5.3: password reset. The message is the same whether or not the account exists.
+async function resetPassword(){
+  const email=$("loginEmail")?.value.trim();
+  if(!email){showLoginError("Type your email address above, then click Forgot password.");return}
+  try{await auth.sendPasswordResetEmail(email)}catch(e){if(e.code==="auth/invalid-email"){showLoginError("That email address doesn't look right.");return}if(e.code!=="auth/user-not-found")console.warn(e)}
+  showLoginError("If an account exists for "+email+", a password-reset email is on its way. Check your inbox (and junk folder).",true);
 }
 async function login(){
   const box=$("loginError"),button=$("signInButton");
@@ -88,7 +155,7 @@ async function login(){
     await auth.signInWithEmailAndPassword(email,password);
     // onAuthStateChanged sends instructors to My Courses and administrators to the Dashboard.
   }catch(e){
-    box.textContent=(e.code==="auth/invalid-credential"||e.code==="auth/wrong-password"||e.code==="auth/user-not-found")?"Incorrect email or password.":"Sign-in failed: "+e.message;
+    box.textContent=signInErrorText(e);
     box.style.display="block";button.disabled=false;button.textContent="Sign In";
   }
 }
@@ -99,10 +166,9 @@ function requestAccess(){
 }
 async function loadHub(){
   try{
-    const snap=await db.collection("abetHubs").doc(cfg.workspaceId).get();
-    const raw=snap.exists?snap.data():{};
-    // Support both the current nested hubData format and older direct-field workspaces.
-    hub=raw.hubData&&typeof raw.hubData==="object"?raw.hubData:{...raw};
+    // v5.3: reads the new per-record layout if it has been migrated, otherwise the old single record.
+    const loaded=await HubStore.load(db,cfg.workspaceId);
+    hub=loaded.hub;
     delete hub.updatedAt;
     hub.routedUploads ||= [];hub.meetingNotes ||= [];hub.streamlinedNarratives ||= [];hub.formsMappings ||= [];
     hub.students ||= [];hub.courses ||= [];hub.slos ||= [];hub.assignments ||= [];hub.grades ||= [];
@@ -114,6 +180,7 @@ async function loadHub(){
     syncGood();
   }catch(error){
     setSyncStatus("bad","Could not load data");
+    if(error.code==="permission-denied"){showSaveWarning("Your account does not have access to the Hub data. Ask the ABET coordinator to add you to the approved users list.");throw error}
     showSaveWarning("The Hub could not load your saved data ("+(error.message||error)+"). Do not enter new grades until this is fixed; refresh the page or check your connection.");
     throw error;
   }
@@ -121,6 +188,12 @@ async function loadHub(){
 async function saveHub(){
   setSyncStatus("busy","Saving…");
   try{
+    if(HubStore.mode==="v2"){
+      const r=await HubStore.saveV2(db,cfg.workspaceId,hub,{isAdmin:admin()});
+      setSyncStatus("good","Saved "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}));
+      if(r.skipped.length){showSaveWarning("Saved, except changes to "+r.skipped.join(", ")+": only an administrator can change those.");}else hideSaveWarning();
+      return r;
+    }
     await db.collection("abetHubs").doc(cfg.workspaceId).set({hubData:hub,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
     setSyncStatus("good","Saved "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}));
     hideSaveWarning();
@@ -1676,8 +1749,9 @@ onHubReady(initUnifiedAnalytics);
 // Recalculate all analytics automatically after any save/delete/archive action.
 const originalSaveHubForAnalytics=saveHub;
 saveHub=async function(){
-  await originalSaveHubForAnalytics();
+  const result=await originalSaveHubForAnalytics();
   if(page()==="assessment-analytics.html"&&$("uaCourse"))renderUnifiedAnalytics();
+  return result;
 };
 
 // Version 5.1 — Guided Gradebook — Syllabus, teaching-history, and semester engine

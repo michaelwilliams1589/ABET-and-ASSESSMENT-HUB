@@ -77,3 +77,4 @@ body[data-version="2"] .topbar{box-shadow:0 2px 12px rgba(0,0,0,.08)}
 .step-list{counter-reset:step;list-style:none;padding:0}.step-list>li{counter-increment:step;margin:0 0 14px;padding-left:44px;position:relative}
 .step-list>li:before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:#c3502a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
 .legend span{display:inline-block;margin-right:12px;padding:2px 8px;border-radius:4px}
+.error.success{color:#1b6b2b;background:#e3f4e6;border-color:#9fd3a9}

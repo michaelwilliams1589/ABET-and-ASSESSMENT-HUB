@@ -19,8 +19,11 @@ const fmtPct=v=>v===null||v===undefined||!Number.isFinite(v)?"—":v.toFixed(1)+
 function ensureV52(){
   ["improvementActions","peoSurveys","advisoryMeetings","historicalResults"].forEach(k=>{if(!Array.isArray(hub[k]))hub[k]=[]});
   if(!hub.settings||typeof hub.settings!=="object")hub.settings={};
-  if(!Array.isArray(hub.settings.peoList)||!hub.settings.peoList.length)
-    hub.settings.peoList=["PEO1","PEO2","PEO3","PEO4","PEO5"].map(id=>({id,text:""}));
+}
+// Default PEO list is computed, not written into settings, so simply opening a page never changes saved data.
+function peoList(){
+  const l=hub.settings?.peoList;
+  return Array.isArray(l)&&l.length?l:["PEO1","PEO2","PEO3","PEO4","PEO5"].map(id=>({id,text:""}));
 }
 async function save(msgHost,okText){
   try{await saveHub();if(msgHost)msgHost.innerHTML=`<div class="notice success">${H(okText||"Saved.")}</div>`;return true}
@@ -117,11 +120,11 @@ function renderSettings(){
   const st=hubSettings();
   host.innerHTML=`<div class="form-grid"><label>Individual threshold (%)<input id="setThreshold" type="number" min="0" max="100" value="${st.threshold}"></label><label>Program target (%)<input id="setTarget" type="number" min="0" max="100" value="${st.target}"></label></div>
   <h4>Program Educational Objectives</h4><p class="muted">Type the wording from your self-study so surveys and advisory records show it.</p>
-  ${hub.settings.peoList.map((p,i)=>`<label>${H(p.id)}<input data-peo-text="${i}" value="${H(p.text)}"></label>`).join("")}
+  ${peoList().map((p,i)=>`<label>${H(p.id)}<input data-peo-text="${i}" value="${H(p.text)}"></label>`).join("")}
   <div class="actions"><button id="saveV52Settings" class="btn primary">Save Settings</button></div><div id="v52SettingsMsg"></div>`;
   el("saveV52Settings").onclick=async()=>{
     hub.settings.sloThreshold=clampPct(el("setThreshold").value,70);hub.settings.programTarget=clampPct(el("setTarget").value,75);
-    host.querySelectorAll("[data-peo-text]").forEach(i=>hub.settings.peoList[Number(i.dataset.peoText)].text=i.value.trim());
+    const list=peoList().map(p=>({...p}));host.querySelectorAll("[data-peo-text]").forEach(i=>list[Number(i.dataset.peoText)].text=i.value.trim());hub.settings.peoList=list;
     if(await save(el("v52SettingsMsg"),"Settings saved. Analytics, reports, the self-study insert, and closeout now use these values."))renderAll();
   };
 }
@@ -199,7 +202,7 @@ function surveyTable(results){
   const {target}=hubSettings();
   return `<div class="table-wrap"><table class="table"><tr><th>PEO</th><th>Answers</th><th>Average (1–5)</th><th>% agree or better</th><th>Target ${target}%</th></tr>${Object.entries(results).sort().map(([p,r])=>`<tr><td>${H(p)} ${H(peoText(p))}</td><td>${r.n}</td><td>${r.mean===null?"—":r.mean.toFixed(2)}</td><td>${fmtPct(r.pctAgree)}</td><td>${r.pctAgree===null?"—":r.pctAgree>=target?"Met":"Not met"}</td></tr>`).join("")}</table></div>`;
 }
-function peoText(p){const x=(hub.settings?.peoList||[]).find(q=>q.id===p);return x?.text?`— ${x.text}`:""}
+function peoText(p){const x=peoList().find(q=>q.id===p);return x?.text?`— ${x.text}`:""}
 async function saveSurvey(){
   if(!pendingSurvey)return;ensureV52();
   hub.peoSurveys.push({id:id("peosurvey"),type:el("psType").value,name:el("psName").value.trim()||`${el("psType").value} survey`,date:el("psDate").value,fileName:pendingSurvey.fileName,respondents:pendingSurvey.respondents,results:pendingSurvey.results,comments:pendingSurvey.comments,createdAt:now(),createdBy:currentUser?.email||""});
@@ -212,7 +215,7 @@ function renderSurveys(){
   host.querySelectorAll("[data-del-survey]").forEach(b=>b.onclick=async()=>{if(!confirm("Delete this survey summary?"))return;hub.peoSurveys=hub.peoSurveys.filter(x=>x.id!==b.dataset.delSurvey);await save(null);renderSurveys()});
 }
 function downloadSurveyTemplate(){
-  const peos=(hub.settings?.peoList||[]).map(p=>p.id);
+  const peos=peoList().map(p=>p.id);
   const head=["Respondent role","Graduation year",...peos.map(p=>`${p} rating (1-5)`),"Comments"];
   const ex=["Employer","2022",...peos.map(()=>"4"),"Graduates are well prepared for PLC work."];
   download("PEO_Survey_Template.csv",[head,ex].map(r=>r.map(csvEscape).join(",")).join("\r\n"),"text/csv");
@@ -221,7 +224,7 @@ function downloadSurveyTemplate(){
 /* ---------- 3b. advisory board ---------- */
 function renderAdvisoryForm(){
   const host=el("abPeoChecks");if(!host)return;ensureV52();
-  host.innerHTML=hub.settings.peoList.map(p=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" value="${H(p.id)}" data-ab-peo> ${H(p.id)}</label>`).join("");
+  host.innerHTML=peoList().map(p=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" value="${H(p.id)}" data-ab-peo> ${H(p.id)}</label>`).join("");
   const sel=el("abActions");
   sel.innerHTML=hub.improvementActions.map(a=>`<option value="${H(a.id)}">${H(a.so)} — ${H(String(a.finding).slice(0,80))}</option>`).join("");
 }
@@ -263,7 +266,7 @@ function tableSoSummary(){
 function tablePeoSo(){
   ensureV52();
   const m=hub.settings.peoSoMap||window.ETDE_PEO_SO_SEED||{};
-  return [["PEO","Objective",...SOS],...hub.settings.peoList.map(p=>[p.id,p.text||"",...SOS.map(so=>m[p.id]?.[so]?"X":"")])];
+  return [["PEO","Objective",...SOS],...peoList().map(p=>[p.id,p.text||"",...SOS.map(so=>m[p.id]?.[so]?"X":"")])];
 }
 function tableActions(){return [["Outcome","Finding","Change Made","Owner","Date","Status","Follow-up Result","Follow-up Date"],...hub.improvementActions.map(a=>[a.so,a.finding,a.change,a.owner,a.date,a.status,a.followUpResult,a.followUpDate])]}
 function tableAdvisory(){return [["Date","Attendees","PEOs Reviewed","PEO Review Notes","Recommendations","Linked Actions"],...hub.advisoryMeetings.map(m=>[m.date,m.attendees,(m.peosReviewed||[]).join(", "),m.peoReviewNotes,m.recommendations,(m.linkedActionIds||[]).map(x=>{const a=hub.improvementActions.find(y=>y.id===x);return a?`${a.so}: ${a.change||a.finding}`:""}).filter(Boolean).join("; ")])]}
