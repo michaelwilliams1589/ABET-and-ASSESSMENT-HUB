@@ -1,0 +1,66 @@
+rules_version = '2';
+// OSUIT ETDE Assessment Hub, Firestore security rules (v5.3)
+// Only people on the approved list can read or write. The list is the "hubUsers" collection:
+//   hubUsers/{email in lowercase}  { role: "admin" | "instructor", active: true, name: "..." }
+// Admin-only data is enforced here on the server, not just hidden in the browser.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function emailKey() { return request.auth.token.email.lower(); }
+    // Password accounts must have a verified email (setting the password through the reset email
+    // verifies it). Microsoft accounts are verified by OSU's directory, limited to the OSU tenant.
+    function verified() {
+      return request.auth.token.email_verified == true
+          || request.auth.token.firebase.sign_in_provider == 'microsoft.com';
+    }
+    function userPath() { return /databases/$(database)/documents/hubUsers/$(emailKey()); }
+    function approved() {
+      return signedIn()
+          && request.auth.token.email is string
+          && verified()
+          && exists(userPath())
+          && get(userPath()).data.active == true;
+    }
+    function isAdmin() { return approved() && get(userPath()).data.role == 'admin'; }
+    function migrated(ws) { return exists(/databases/$(database)/documents/abetHubs/$(ws)/meta/_structure); }
+
+    // Approved-users list: you can see your own entry; only admins can see or change the list.
+    match /hubUsers/{email} {
+      allow read: if signedIn() && request.auth.token.email is string && (emailKey() == email || isAdmin());
+      allow write: if isAdmin()
+                   && request.resource.data.role in ['admin', 'instructor']
+                   && request.resource.data.active is bool;
+      allow delete: if isAdmin() && email != emailKey();   // an admin cannot remove themselves
+    }
+
+    // OLD single-record workspace. Readable by approved users; writable only until the migration is done,
+    // after which it stays as a read-only historical copy.
+    match /abetHubs/{ws} {
+      allow read: if approved();
+      allow write: if approved() && !migrated(ws);
+    }
+
+    // NEW layout: workspace settings and structure.
+    match /abetHubs/{ws}/meta/{key} {
+      allow read: if approved();
+      allow create, update: if isAdmin()
+        || (approved() && !(key in ['settings', 'curriculum', 'roadmapSettings', '_structure']))
+        || (approved() && key == '_structure' && resource != null
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['collections']));
+      allow delete: if isAdmin() && key != '_structure';
+    }
+
+    // NEW layout: one document per record (uploads, grades, actions, surveys, meetings, ...).
+    match /abetHubs/{ws}/{coll}/{item} {
+      allow read: if coll != 'meta' && approved();
+      allow write: if coll != 'meta'
+        && (isAdmin() || (approved() && !(coll in ['abetAssignmentMappings', 'historicalResults'])));
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
