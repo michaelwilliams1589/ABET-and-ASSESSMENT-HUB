@@ -1,10 +1,10 @@
-# OSUIT ETDE Assessment & Accreditation Hub: User Guide (v5.2)
+# OSUIT ETDE Assessment & Accreditation Hub: User Guide (v5.3)
 
 A website for collecting ABET evidence in the Instrumentation & Automation program. Sign in with your faculty account, upload Canvas grades, and the Hub works out the student outcome (SO) results for the self-study.
 
 ## For instructors: three steps
 
-1. **Sign in.** The Hub opens to **My Courses**. The first time, choose your name in "I am"; the Hub remembers it on that computer.
+1. **Sign in** with **Sign in with Microsoft** (your OSU account) or your email and password. Forgot it? Type your email and click **Forgot password?**. The Hub opens to **My Courses**. The first time, choose your name in "I am"; the Hub remembers it on that computer.
 2. **Click "Upload Canvas grades"** on the course card. Export the gradebook from Canvas (Grades → Export → CSV) and choose that file. The Hub already knows the course and which ABET assignment to look for, so confirm the match and click **Save Upload**.
 3. **Done.** The course gets a ✅ once everything due this term is in. If a course says "Nothing to do", no ABET evidence is scheduled for it this term.
 
@@ -25,6 +25,10 @@ Use **🎯 Outcomes & Improvement** in the menu:
 
 Other pages are under **Advanced tools** in the menu: Analytics, Curriculum Planner, ABET Assignment Mapping, Syllabus & Semester (where you assign instructors to courses each term, which drives My Courses), Calendar, Meeting Notes, Administration, and System Health (backups).
 
+## Who can get in
+
+Only people on the **approved users** list (Administration → Approved Users) can open the Hub, and the Firebase security rules enforce this on the server. New faculty click **Request Faculty Access** on the sign-in page; an administrator adds them. Instructors can't change program settings, the official assignment mapping, or imported historical data. Those are for administrators.
+
 ## Good habits
 
 - The top bar shows **Saved 2:31 PM** after each real save. If a save fails, a red banner appears and the bar says **NOT saved**. Don't close the page; check your connection and try again.
@@ -41,8 +45,16 @@ Open http://localhost:8000/. It signs in to the same Firebase project as the liv
 
 ## For maintainers
 
-- Data lives in one Firestore document, `abetHubs/etde-main` (field `hubData`). v5.2 only **adds** fields: `improvementActions`, `peoSurveys`, `advisoryMeetings`, `historicalResults`, `settings.peoList`, and `settings.programTarget`/`sloThreshold`. Older data loads unchanged.
+- **Firebase setup:** follow `docs/FIREBASE_SETUP_CHECKLIST.md`.
+- **Storage:** after the one-time upgrade (System Health), each record is its own document under `abetHubs/etde-main/{collection}/{id}`, and settings live in `abetHubs/etde-main/meta/{name}`. Saves write only the records that changed, so people don't overwrite each other and the 1 MB limit is gone. Until the upgrade, the Hub reads and writes the old single record as before. Code: `assets/data-store.js`. Admin tools: `assets/v53-admin.js`.
+- **Rules:** `firestore.rules` (same text as `FIRESTORE_RULES.txt`). Test them locally with the emulator, which needs Java and `npm i firebase-tools @firebase/rules-unit-testing firebase playwright`:
+  `npx firebase emulators:exec --project demo-etde-hub --only firestore "node tools/rules.test.js"`
+  End-to-end test (sign-in, migration, concurrent saves), with `python3 -m http.server 8765` running:
+  `npx firebase emulators:exec --project demo-etde-hub --only auth,firestore "node tools/emulator-test.js"`
+  The `demo-` project ID exists only inside the emulator, so these tests can't touch the live project.
+
+- Before the upgrade, data lives in one Firestore document, `abetHubs/etde-main` (field `hubData`). v5.2 only **adds** fields: `improvementActions`, `peoSurveys`, `advisoryMeetings`, `historicalResults`, `settings.peoList`, and `settings.programTarget`/`sloThreshold`. Older data loads unchanged.
 - To rebuild the historical seed and schedule after the spreadsheets change: `python3 tools/build_seed.py "/path/to/ABET files"`.
 - Smoke test with Firebase mocked: start the server above on port 8765, then `npm i playwright && node tools/smoke-test.js`.
 - SheetJS 0.20.3 and JSZip are served from `assets/vendor/`, not a CDN.
-- Known limits: last save wins if two people save at the same moment, and Firestore caps the single record at 1 MB. Moving to OSU Microsoft 365 sign-in and storage is planned separately.
+- Known limit after the upgrade: if two people edit the *same* record at the same moment, the later save wins for that one record.

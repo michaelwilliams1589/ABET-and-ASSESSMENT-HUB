@@ -1,8 +1,14 @@
 const {chromium}=require('playwright');const fs=require('fs');
 const BASE='http://127.0.0.1:8765/';
-const MOCK=`window.firebase={apps:[],initializeApp(){this.apps.push(1)},
-auth(){return{onAuthStateChanged(cb){setTimeout(()=>cb(window.__mockUser||null),0)},signOut:async()=>{},signInWithEmailAndPassword:async()=>{}}},
-firestore:Object.assign(()=>({collection:()=>({doc:()=>({get:async()=>({exists:!!localStorage.mockHub,data:()=>JSON.parse(localStorage.mockHub||'{}')}),set:async(d)=>{if(window.__failSave)throw new Error('offline (test)');const cur=JSON.parse(localStorage.mockHub||'{}');localStorage.mockHub=JSON.stringify({...cur,...d})}})})}),{FieldValue:{serverTimestamp:()=>null}})};`;
+const MOCK=`(function(){
+const denied=()=>{const e=new Error('permission-denied (mock: old rules)');e.code='permission-denied';throw e};
+function docRef(path){return{path,collection:n=>colRef(path+'/'+n),
+ get:async()=>{if(path.startsWith('hubUsers/'))denied();if(path==='abetHubs/etde-main')return{exists:!!localStorage.mockHub,data:()=>JSON.parse(localStorage.mockHub||'{}')};return{exists:false,data:()=>undefined}},
+ set:async(d)=>{if(window.__failSave)throw new Error('offline (test)');if(path!=='abetHubs/etde-main')throw new Error('mock: unexpected write '+path);const cur=JSON.parse(localStorage.mockHub||'{}');localStorage.mockHub=JSON.stringify({...cur,...d})}}}
+function colRef(path){return{doc:id=>docRef(path+'/'+id),get:async()=>({empty:true,size:0,docs:[],forEach(){}})}}
+window.firebase={apps:[],initializeApp(){this.apps.push(1)},
+auth:Object.assign(()=>({onAuthStateChanged(cb){setTimeout(()=>cb(window.__mockUser||null),0)},signOut:async()=>{},signInWithEmailAndPassword:async()=>{},getRedirectResult:async()=>null,sendPasswordResetEmail:async()=>{},useEmulator(){}}),{OAuthProvider:function(id){this.providerId=id;this.setCustomParameters=p=>this.p=p;this.addScope=()=>{}}}),
+firestore:Object.assign(()=>({settings(){},useEmulator(){},batch(){denied()},collection:n=>colRef(n)}),{FieldValue:{serverTimestamp:()=>null,arrayUnion:(...a)=>a}})};})();`;
 const grades=[95,88,72,71,90,65,50,40,30,85].map((e,i)=>({id:'g'+i,studentId:'s'+i,assignmentId:'a1',earned:e,possible:100,term:'Fall 2025'}));
 const FIX={hubData:{courses:[{id:'c1',code:'ETDE 2113',name:'Intro to PLCs',term:'Fall 2025'}],students:grades.map((g,i)=>({id:'s'+i,sid:'100'+i,name:'Student '+i,courseId:'c1'})),
  slos:[],assignments:[{id:'a1',courseId:'c1',courseCode:'ETDE 2113',term:'Fall 2025',officialSloCode:'SLO 2',name:'Lab 2 Door System',possible:100}],grades,

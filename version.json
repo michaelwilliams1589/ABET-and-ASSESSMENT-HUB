@@ -1,7 +1,7 @@
 {
   "name": "OSUIT ETDE Assessment & Accreditation Hub",
-  "version": "5.2.0",
-  "release": "Outcomes & Improvement",
+  "version": "5.3.0",
+  "release": "Secure Sign-In",
   "workspace": "abetHubs/etde-main",
   "firebaseStorageRequired": false,
   "coreGuarantees": [
