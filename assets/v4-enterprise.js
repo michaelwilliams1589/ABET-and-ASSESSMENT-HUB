@@ -26,8 +26,8 @@ function renderIntegrity(){
  <div class="metric"><strong>${orphans}</strong><span>Orphan Records</span></div></div>
  ${orphans?`<div class="notice warning">Found ${orphans} disconnected record(s). Use the Analytics cleanup controls after downloading a backup.</div>`:'<div class="notice success">All checked records are connected correctly.</div>'}`;
 }
-document.addEventListener("DOMContentLoaded",()=>setTimeout(()=>{
+window.onHubReady(()=>{
  renderIntegrity();
  document.getElementById("v4RunIntegrity")?.addEventListener("click",renderIntegrity);
-},1400));
+});
 })();

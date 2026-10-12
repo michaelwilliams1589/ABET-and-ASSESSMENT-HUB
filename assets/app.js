@@ -1,6 +1,23 @@
 
 const cfg=window.ABET_CONFIG, CUR=window.ETDE_CURRICULUM;
 let auth,db,currentUser=null,hub={};
+// v5.2: one shared workspace object. Older add-on scripts read window.hub / window.currentUser;
+// before v5.2 those pointed at a different, empty object. These accessors keep them in sync.
+Object.defineProperty(window,"hub",{configurable:true,get(){return hub},set(v){hub=v&&typeof v==="object"?v:{}}});
+Object.defineProperty(window,"currentUser",{configurable:true,get(){return currentUser}});
+// v5.2: page add-ons start when the workspace has loaded, instead of guessing with timers.
+window.__hubReady=false;
+window.onHubReady=function(fn){
+  const run=()=>{try{fn()}catch(e){console.error("Hub add-on failed",e)}};
+  if(window.__hubReady)run();else document.addEventListener("hub:loaded",run,{once:true});
+};
+// v5.2: single source of truth for the individual threshold and program target.
+function clampPct(v,d){const n=Number(v);return Number.isFinite(n)&&String(v).trim()!==""?Math.max(0,Math.min(100,n)):d}
+function hubSettings(){
+  const s=(hub&&hub.settings)||{};
+  return {threshold:clampPct(s.sloThreshold??s.threshold??s.defaultThreshold,70),target:clampPct(s.programTarget,75)};
+}
+window.hubSettings=hubSettings;
 let uploadType="",uploadRows=[],formsRows=[],formsHeaders=[],formsMapping={},formsFile=null,journalRows=[],journalSourceFiles=[],gradebookFile=null,gradebookMatrix=[],gradebookHeaders=[],gradebookAssignments=[],gradebookStudents=[],gradebookCourseCode="",gradebookSection="";
 
 const $=id=>document.getElementById(id);
@@ -50,6 +67,8 @@ async function init(){
     if(page()==="admin.html"&&!admin()){location.href="dashboard.html";return}
     await loadHub();
     await routePage();
+    window.__hubReady=true;
+    document.dispatchEvent(new CustomEvent("hub:loaded"));
   });
 }
 function bindStatic(){
@@ -94,15 +113,36 @@ async function loadHub(){
     hub.roadmapSettings ||= {cycleStartYear:2026,retentionYears:6};
     syncGood();
   }catch(error){
-    document.querySelectorAll("[data-sync]").forEach(e=>e.innerHTML='<span class="dot warn"></span> Sync error');
+    setSyncStatus("bad","Could not load data");
+    showSaveWarning("The Hub could not load your saved data ("+(error.message||error)+"). Do not enter new grades until this is fixed; refresh the page or check your connection.");
     throw error;
   }
 }
 async function saveHub(){
-  try{await db.collection("abetHubs").doc(cfg.workspaceId).set({hubData:hub,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});syncGood()}
-  catch(error){document.querySelectorAll("[data-sync]").forEach(e=>e.innerHTML='<span class="dot warn"></span> Save failed');throw error}
+  setSyncStatus("busy","Saving…");
+  try{
+    await db.collection("abetHubs").doc(cfg.workspaceId).set({hubData:hub,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    setSyncStatus("good","Saved "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}));
+    hideSaveWarning();
+  }catch(error){
+    setSyncStatus("bad","NOT saved");
+    showSaveWarning("Your last change was NOT saved ("+(error.message||error)+"). Keep this page open, check your connection, and try again. Download a backup from System Health if this keeps happening.");
+    throw error;
+  }
 }
-function syncGood(){document.querySelectorAll("[data-sync]").forEach(e=>e.innerHTML='<span class="dot good"></span> Live and synced')}
+// v5.2: honest save status. "good" is shown only after a real load or save succeeds.
+function setSyncStatus(state,text){
+  const cls=state==="good"?"good":state==="busy"?"":"warn";
+  document.querySelectorAll("[data-sync]").forEach(e=>{e.innerHTML=`<span class="dot ${cls}"></span> ${esc(text)}`;e.title=state==="good"?"Your data is stored in the shared workspace.":""});
+}
+function showSaveWarning(msg){
+  let box=$("saveWarningBanner");
+  if(!box){box=document.createElement("div");box.id="saveWarningBanner";box.setAttribute("role","alert");box.className="save-warning";document.body.prepend(box)}
+  box.textContent=msg;box.style.display="block";
+}
+function hideSaveWarning(){const b=$("saveWarningBanner");if(b)b.style.display="none"}
+window.addEventListener("beforeunload",e=>{const b=$("saveWarningBanner");if(b&&b.style.display==="block"){e.preventDefault();e.returnValue=""}});
+function syncGood(){setSyncStatus("good","Loaded "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}))}
 
 async function routePage(){
   const p=page();
@@ -141,7 +181,7 @@ function renderDashboard(){
   const c=cycleInfo(),themes=["Collect","Improve","Analyze","Collect","Improve","Prepare"];
   $("dashboardCycle").innerHTML=`<strong>Year ${c.year} of 6 — ${ay(c.cur)}</strong><p>${themes[c.year-1]} phase</p>`;
   const due=scheduledCodes(c.year).filter(x=>!hasEvidence(x));
-  $("dashboardDue").innerHTML=due.length?due.map(x=>`<span class="badge warn">${x}</span>`).join(" "):'<span class="badge good">All scheduled evidence received</span>';
+  $("dashboardDue").innerHTML=due.length?due.map(x=>`<span class="badge warn">${esc(x)}</span>`).join(" "):'<span class="badge good">All scheduled evidence received</span>';
   if(issues.length){$("nextStepTitle").textContent=`Correct ${issues.length} upload routing issue${issues.length===1?"":"s"}`;$("nextStepText").textContent="Administrator review is needed.";$("nextStepButton").href="admin.html"}
   else if(unapproved.length){$("nextStepTitle").textContent=`Review ${unapproved.length} assessment result${unapproved.length===1?"":"s"}`;$("nextStepText").textContent="Review the summary and approve the narrative.";$("nextStepButton").href="results.html"}
   else{$("nextStepTitle").textContent="Upload the next assessment";$("nextStepText").textContent="The Hub will route it to the correct course and section.";$("nextStepButton").href="uploads.html"}
@@ -339,7 +379,7 @@ function showJournalReview(){
   $("uploadFilePanel").classList.add("hidden");
   $("uploadReviewPanel").classList.remove("hidden");
   const readable=journalRows.filter(r=>r.textLength>0).length;
-  $("uploadReview").innerHTML=`<div class="notice success"><strong>${journalRows.length} actual journal file(s) found.</strong><br>${readable} had readable text. Unrelated timesheets, BOMs, sign-in sheets, and project files were ignored.</div>
+  $("uploadReview").innerHTML=`<div class="notice success"><strong>${journalRows.length} actual journal file(s) found.</strong><br>${esc(readable)} had readable text. Unrelated timesheets, BOMs, sign-in sheets, and project files were ignored.</div>
   <div class="table-wrap"><table class="table"><tr><th>Student</th><th>Week</th><th>File</th><th>Text</th><th>Section</th></tr>${journalRows.map((r,i)=>`<tr><td>${esc(r.student)}</td><td>${r.week||"—"}</td><td>${esc(r.fileName)}<br><small>${esc(r.archivePath)}</small></td><td>${r.textLength?`${r.textLength.toLocaleString()} characters`:"Manual review"}</td><td><input data-journal-row="${i}" data-field="section" value="${esc(r.section)}" placeholder="Section / CRN"></td></tr>`).join("")}</table></div>`;
   document.querySelectorAll("[data-journal-row]").forEach(input=>input.addEventListener("input",()=>journalRows[Number(input.dataset.journalRow)][input.dataset.field]=input.value));
 }
@@ -814,7 +854,7 @@ function renderAdminRetention(){
 function renderAdmin(){
   $("adminView").addEventListener("change",listAdmin);$("adminSearch").addEventListener("input",listAdmin);listAdmin();renderAdminRetention()
 }
-function listAdmin(){const view=$("adminView").value,q=$("adminSearch").value.toLowerCase();let rows=hub.routedUploads.filter(x=>view==="all"||(view==="archived"?x.archived:!x.archived));rows=rows.filter(x=>JSON.stringify(x).toLowerCase().includes(q));$("adminUploads").innerHTML=rows.map(x=>`<div class="admin-row"><strong>${esc(x.fileName)}</strong><br>${esc(x.courseCode)} | ${esc(x.section)} | ${esc(x.assessmentName)}<div class="actions"><button class="btn outline" data-edit="${x.id}">Edit</button>${x.archived?`<button class="btn primary" data-restore="${x.id}">Restore</button>`:`<button class="btn secondary" data-archive="${x.id}">Archive</button>`}<button class="btn danger" data-delete="${x.id}">Delete</button></div></div>`).join("")||'<div class="notice">No uploads found.</div>';document.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editUpload(b.dataset.edit)));document.querySelectorAll("[data-archive]").forEach(b=>b.addEventListener("click",()=>archiveUpload(b.dataset.archive,true)));document.querySelectorAll("[data-restore]").forEach(b=>b.addEventListener("click",()=>archiveUpload(b.dataset.restore,false)));document.querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteUpload(b.dataset.delete)))}
+function listAdmin(){const view=$("adminView").value,q=$("adminSearch").value.toLowerCase();let rows=hub.routedUploads.filter(x=>view==="all"||(view==="archived"?x.archived:!x.archived));rows=rows.filter(x=>JSON.stringify(x).toLowerCase().includes(q));$("adminUploads").innerHTML=rows.map(x=>`<div class="admin-row"><strong>${esc(x.fileName)}</strong><br>${esc(x.courseCode)} | ${esc(x.section)} | ${esc(x.assessmentName)}<div class="actions"><button class="btn outline" data-edit="${esc(x.id)}">Edit</button>${x.archived?`<button class="btn primary" data-restore="${esc(x.id)}">Restore</button>`:`<button class="btn secondary" data-archive="${esc(x.id)}">Archive</button>`}<button class="btn danger" data-delete="${esc(x.id)}">Delete</button></div></div>`).join("")||'<div class="notice">No uploads found.</div>';document.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editUpload(b.dataset.edit)));document.querySelectorAll("[data-archive]").forEach(b=>b.addEventListener("click",()=>archiveUpload(b.dataset.archive,true)));document.querySelectorAll("[data-restore]").forEach(b=>b.addEventListener("click",()=>archiveUpload(b.dataset.restore,false)));document.querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteUpload(b.dataset.delete)))}
 async function editUpload(i){const u=hub.routedUploads.find(x=>x.id===i);if(!u)return;const c=prompt("Course code:",u.courseCode||"");if(c===null)return;const s=prompt("Section:",u.section||"");if(s===null)return;const a=prompt("Assessment name:",u.assessmentName||"");if(a===null)return;u.courseCode=c.toUpperCase();u.section=s;u.assessmentName=a;u.status=u.courseCode&&u.section?"routed":"needs-review";await saveHub();listAdmin()}
 async function archiveUpload(i,v){const u=hub.routedUploads.find(x=>x.id===i);if(!u)return;u.archived=v;await saveHub();listAdmin();renderAdminRetention()}
 async function deleteUpload(i){
@@ -918,18 +958,17 @@ function analyticsSummary(courseId,sloId,threshold,target){
 function allSloSummaries(courseId,threshold){
   const d=analyticsData();
   return d.slos.map(s=>{
-    const r=analyticsSummary(courseId,s.id,threshold,75);
+    const r=analyticsSummary(courseId,s.id,threshold,hubSettings().target);
     return {slo:s,passed:r.passed.length,failed:r.failed.length,skipped:r.skipped.length,assessed:r.assessed,rate:r.rate};
   }).filter(x=>x.assessed||x.skipped);
 }
 function renderAnalyticsSelectors(){
   const d=analyticsData();
-  $("analyticsCourse").innerHTML='<option value="">All Courses</option>'+d.courses.map(c=>`<option value="${c.id}">${esc(courseName(c))}</option>`).join("");
-  $("analyticsSlo").innerHTML='<option value="">All SLOs Combined</option>'+d.slos.map(s=>`<option value="${s.id}">${esc(sloName(s))}</option>`).join("");
-  const defaultThreshold=Number(hub.settings?.sloThreshold||hub.settings?.threshold||hub.settings?.defaultThreshold);
-  const defaultTarget=Number(hub.settings?.programTarget);
-  if(Number.isFinite(defaultThreshold))$("analyticsThreshold").value=defaultThreshold;
-  if(Number.isFinite(defaultTarget))$("analyticsTarget").value=defaultTarget;
+  $("analyticsCourse").innerHTML='<option value="">All Courses</option>'+d.courses.map(c=>`<option value="${esc(c.id)}">${esc(courseName(c))}</option>`).join("");
+  $("analyticsSlo").innerHTML='<option value="">All SLOs Combined</option>'+d.slos.map(s=>`<option value="${esc(s.id)}">${esc(sloName(s))}</option>`).join("");
+  const st=hubSettings();
+  $("analyticsThreshold").value=st.threshold;
+  $("analyticsTarget").value=st.target;
 }
 function renderStudentList(idName,rows,cls){
   const host=$(idName);
@@ -1217,7 +1256,7 @@ function filteredQuantRows(){
   );
   const assignmentIds=new Set(assignments.map(a=>a.id));
   const students=(hub.students||[]).filter(s=>s.active!==false&&(!f.course||!s.courseId||s.courseId===f.course.id));
-  const threshold=Math.max(0,Math.min(100,Number(hub.settings?.sloThreshold||hub.settings?.threshold||70)));
+  const threshold=hubSettings().threshold;
   return students.map(student=>{
     const grades=(hub.grades||[]).filter(g=>g.studentId===student.id&&assignmentIds.has(g.assignmentId));
     let weighted=0,weight=0,count=0;
@@ -1632,7 +1671,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 });
 
-document.addEventListener("DOMContentLoaded",()=>setTimeout(initUnifiedAnalytics,900));
+onHubReady(initUnifiedAnalytics);
 
 // Recalculate all analytics automatically after any save/delete/archive action.
 const originalSaveHubForAnalytics=saveHub;
@@ -1764,18 +1803,18 @@ async function addTeachingAssignment(){
 }
 function renderAssignmentManager(){
  const host=$("seAssignmentManager");if(!host)return;
- host.innerHTML=hub.currentAssignments.map(a=>`<div class="admin-row"><strong>${esc(a.term)} — ${esc(a.courseCode)} — ${esc(a.instructor)}</strong><br>${esc(a.section||"No section")}<div class="actions"><button class="btn danger" data-delete-assignment="${a.id}">Delete</button></div></div>`).join("")||'<div class="notice">No assignments entered.</div>';
+ host.innerHTML=hub.currentAssignments.map(a=>`<div class="admin-row"><strong>${esc(a.term)} — ${esc(a.courseCode)} — ${esc(a.instructor)}</strong><br>${esc(a.section||"No section")}<div class="actions"><button class="btn danger" data-delete-assignment="${esc(a.id)}">Delete</button></div></div>`).join("")||'<div class="notice">No assignments entered.</div>';
  document.querySelectorAll("[data-delete-assignment]").forEach(b=>b.onclick=async()=>{hub.currentAssignments=hub.currentAssignments.filter(a=>a.id!==b.dataset.deleteAssignment);await saveHub();renderAssignmentManager();renderRequirementBoard()});
 }
 function renderTermManager(){
  const host=$("seTermManager");if(!host)return;
- host.innerHTML=hub.termDates.map(t=>`<div class="admin-row"><strong>${esc(t.name)}</strong><br>${t.start} through ${t.end}</div>`).join("");
+ host.innerHTML=hub.termDates.map(t=>`<div class="admin-row"><strong>${esc(t.name)}</strong><br>${esc(t.start)} through ${esc(t.end)}</div>`).join("");
 }
 function renderCurrentTermHeader(){
  const term=currentTermName(),record=currentTermRecord();
  $("seCurrentTerm").textContent=term;$("seCurrentDate").textContent=new Date().toLocaleString();
  const assigns=currentAssignments(),required=assigns.reduce((n,a)=>n+requirementsForAssignment(a).filter(r=>!requirementDone(a,r)).length,0);
- $("seCurrentRequirements").innerHTML=`<span class="badge">${assigns.length} assigned course(s)</span> <span class="badge ${required?"warn":"good"}">${required} requirement(s) remaining</span>${record?`<p>Official term range configured: ${record.start} through ${record.end}</p>`:"<p class='warning'>This date is outside the configured term ranges; the term was inferred from the month.</p>"}`;
+ $("seCurrentRequirements").innerHTML=`<span class="badge">${assigns.length} assigned course(s)</span> <span class="badge ${required?"warn":"good"}">${required} requirement(s) remaining</span>${record?`<p>Official term range configured: ${esc(record.start)} through ${esc(record.end)}</p>`:"<p class='warning'>This date is outside the configured term ranges; the term was inferred from the month.</p>"}`;
 }
 function renderDashboardSemester(){
  if(page()!=="dashboard.html"||!$("dashCurrentTerm"))return;
@@ -1791,7 +1830,7 @@ function initSyllabusEngine(){
  $("seAssignTerm").value=currentTermName();
  document.querySelectorAll("[data-se-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-se-tab]").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".se-panel").forEach(x=>x.classList.add("hidden"));$(`se_${b.dataset.seTab}`).classList.remove("hidden")});
 }
-document.addEventListener("DOMContentLoaded",()=>setTimeout(()=>{initSyllabusEngine();renderDashboardSemester()},950));
+onHubReady(()=>{initSyllabusEngine();renderDashboardSemester()});
 
 
 // Version 2.1 - Semester closeout and self-study insertion exports
@@ -1898,7 +1937,7 @@ function selfStudyStyles(){
   .label{font-weight:bold}.small{font-size:9pt}
   </style>`;
 }
-function buildSelfStudyInsertHtml(term,sloFilter="",threshold=70,target=75,programAction=""){
+function buildSelfStudyInsertHtml(term,sloFilter="",threshold=hubSettings().threshold,target=hubSettings().target,programAction=""){
   const assignments=termAssignments(term).filter(a=>!sloFilter||a.sloId===sloFilter);
   const grouped={};
   assignments.forEach(a=>{const key=a.sloId||"unmapped";(grouped[key] ||= []).push(a)});
@@ -1949,11 +1988,11 @@ function populateInsertSlos(){
   select.innerHTML='<option value="">All Outcomes Assessed This Semester</option>'+(hub.slos||[]).map(s=>`<option value="${esc(s.id)}">${esc(s.code||s.name||s.id)} - ${esc(s.description||"")}</option>`).join("");
 }
 function previewSelfStudyInsert(){
-  const html=buildSelfStudyInsertHtml($("insertTerm").value,$("insertSlo").value,Number($("insertThreshold").value)||70,Number($("insertTarget").value)||75,$("insertProgramAction").value);
+  const html=buildSelfStudyInsertHtml($("insertTerm").value,$("insertSlo").value,clampPct($("insertThreshold").value,hubSettings().threshold),clampPct($("insertTarget").value,hubSettings().target),$("insertProgramAction").value);
   $("selfStudyInsertPreview").innerHTML=`<div class="self-study-preview">${html.replace(/<!doctype html>|<html>|<\/html>|<head>.*?<\/head>|<body>|<\/body>/gs,"")}</div>`;
 }
 function downloadSelfStudyInsert(){
-  const term=$("insertTerm").value,html=buildSelfStudyInsertHtml(term,$("insertSlo").value,Number($("insertThreshold").value)||70,Number($("insertTarget").value)||75,$("insertProgramAction").value);
+  const term=$("insertTerm").value,html=buildSelfStudyInsertHtml(term,$("insertSlo").value,clampPct($("insertThreshold").value,hubSettings().threshold),clampPct($("insertTarget").value,hubSettings().target),$("insertProgramAction").value);
   downloadBlob(`Criterion_4_Self_Study_Insert_${sanitizeFilePart(term)}.doc`,new Blob([html],{type:"application/msword"}));
 }
 async function downloadSemesterArchive(){
@@ -1965,8 +2004,8 @@ async function downloadSemesterArchive(){
   root.file("00_READ_ME.txt",`OSUIT ETDE ABET Semester Archive\nSemester: ${term}\nStatus: ${metadata.status}\nPrepared By: ${metadata.preparedBy}\nReview Date: ${metadata.reviewDate}\nExported: ${metadata.exportedAt}\n\nIMPORTANT: Original PDF, DOCX, ZIP, and XLSX source files are not stored by the Hub. Save those separately in this OneDrive folder when needed. This archive contains the Hub data, extracted journal excerpts, summaries, analytics records, meeting notes, and evidence index.`);
   root.file("01_Archive_Metadata.json",JSON.stringify(metadata,null,2));
   root.file("02_Semester_Report.txt",(()=>{const old=$("reportTerm").value;$("reportTerm").value=term;generateReport();const v=$("reportPreview").value;$("reportTerm").value=old;return v})());
-  root.file("03_Criterion_4_Self_Study_Insert.doc",buildSelfStudyInsertHtml(term,"",70,75,""));
-  root.file("04_Criterion_4_Self_Study_Insert.html",buildSelfStudyInsertHtml(term,"",70,75,""));
+  root.file("03_Criterion_4_Self_Study_Insert.doc",buildSelfStudyInsertHtml(term,"",hubSettings().threshold,hubSettings().target,""));
+  root.file("04_Criterion_4_Self_Study_Insert.html",buildSelfStudyInsertHtml(term,"",hubSettings().threshold,hubSettings().target,""));
   root.file("05_Evidence_Index.csv",toCsv(uploads,[
     {label:"Type",value:"type"},{label:"File Name",value:"fileName"},{label:"Course Code",value:"courseCode"},{label:"Course Name",value:"courseName"},{label:"Section",value:"section"},{label:"Assessment",value:"assessmentName"},{label:"Uploader",value:"uploaderEmail"},{label:"Uploaded At",value:"uploadedAt"},{label:"Status",value:"status"},{label:"Approved",value:u=>u.resultApproved?"Yes":"No"}
   ]));

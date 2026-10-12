@@ -24,5 +24,5 @@ function bindEnterpriseTools(){
     });
   }
 }
-document.addEventListener("DOMContentLoaded",()=>setTimeout(bindEnterpriseTools,1400));
+window.onHubReady(bindEnterpriseTools);
 })();
