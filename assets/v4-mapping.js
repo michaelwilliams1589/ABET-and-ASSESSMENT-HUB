@@ -34,9 +34,9 @@ function populateMappingFilters(){
   ensureMappings();
   const slos=[...new Set(hub.abetAssignmentMappings.map(m=>m.sloCode))].sort();
   const courses=[...new Set(hub.abetAssignmentMappings.map(m=>m.courseCode))].sort();
-  document.getElementById("mappingSloFilter").innerHTML='<option value="">All Outcomes</option>'+slos.map(x=>`<option>${x}</option>`).join("");
-  document.getElementById("mappingEditSlo").innerHTML=slos.map(x=>`<option>${x}</option>`).join("");
-  document.getElementById("mappingCourseFilter").innerHTML='<option value="">All Courses</option>'+courses.map(x=>`<option>${x}</option>`).join("");
+  document.getElementById("mappingSloFilter").innerHTML='<option value="">All Outcomes</option>'+slos.map(x=>`<option>${esc(x)}</option>`).join("");
+  document.getElementById("mappingEditSlo").innerHTML=slos.map(x=>`<option>${esc(x)}</option>`).join("");
+  document.getElementById("mappingCourseFilter").innerHTML='<option value="">All Courses</option>'+courses.map(x=>`<option>${esc(x)}</option>`).join("");
 }
 function editMapping(idn){
   const m=hub.abetAssignmentMappings.find(x=>x.id===idn);if(!m)return;
@@ -83,7 +83,7 @@ function init(){
   document.getElementById("mappingSave").onclick=saveMapping;
   document.getElementById("mappingCancel").onclick=clearMappingForm;
 }
-document.addEventListener("DOMContentLoaded",()=>setTimeout(init,1200));
+onHubReady(init);
 window.ensureAbetAssignmentMappings=ensureMappings;
 window.matchAbetAssignment=function(courseCode,assignmentName){
   ensureMappings();

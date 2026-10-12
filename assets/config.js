@@ -8,5 +8,9 @@ window.ABET_CONFIG = {
     appId: "1:139370646600:web:183b3e4cd82f5cecff5c7d"
   },
   workspaceId: "etde-main",
-  adminEmails: ["michael.williams14@okstate.edu"]
+  // Used only until the approved-users list (Firestore "hubUsers") is set up. After that, roles come from hubUsers.
+  adminEmails: ["michael.williams14@okstate.edu"],
+  // Sign in with Microsoft (OSU Microsoft 365). tenant = OSU's Directory (tenant) ID or domain, e.g. "okstate.edu".
+  // Leave tenant "" to allow any Microsoft account (not recommended). Set enabled:false to hide the button.
+  microsoft: { enabled: true, tenant: "okstate.edu", loginHint: "" }
 };

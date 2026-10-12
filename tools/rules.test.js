@@ -1,0 +1,53 @@
+// Security-rules tests. Run from the repo folder:
+//   npx firebase emulators:exec --project demo-etde-hub --only firestore "node tools/rules.test.js"
+// "demo-" projects only exist inside the emulator; nothing touches the live Firebase project.
+const {initializeTestEnvironment,assertFails,assertSucceeds}=require('@firebase/rules-unit-testing');
+const fs=require('fs'),path=require('path');
+const {doc,getDoc,setDoc,deleteDoc,updateDoc,arrayUnion}=require('firebase/firestore');
+(async()=>{
+  const rules=fs.readFileSync(path.join(__dirname,'..','firestore.rules'),'utf8');
+  if(rules!==fs.readFileSync(path.join(__dirname,'..','FIRESTORE_RULES.txt'),'utf8'))throw new Error('firestore.rules and FIRESTORE_RULES.txt differ');
+  const env=await initializeTestEnvironment({projectId:'demo-etde-hub',firestore:{rules,host:'127.0.0.1',port:8080}});
+  await env.withSecurityRulesDisabled(async c=>{const d=c.firestore();
+    await setDoc(doc(d,'hubUsers/admin@okstate.edu'),{role:'admin',active:true});
+    await setDoc(doc(d,'hubUsers/inst@okstate.edu'),{role:'instructor',active:true});
+    await setDoc(doc(d,'hubUsers/gone@okstate.edu'),{role:'instructor',active:false});
+    await setDoc(doc(d,'abetHubs/etde-main'),{hubData:{grades:[]}});
+    await setDoc(doc(d,'abetHubs/ws2'),{hubData:{}});
+    await setDoc(doc(d,'abetHubs/ws2/meta/_structure'),{version:2,collections:['grades']});
+    await setDoc(doc(d,'abetHubs/ws2/grades/g1'),{id:'g1'});
+    await setDoc(doc(d,'abetHubs/ws2/meta/settings'),{value:{programTarget:75}});
+  });
+  const as=(email,extra={})=>env.authenticatedContext('u_'+email,{email,email_verified:true,...extra}).firestore();
+  const admin=as('admin@okstate.edu'),inst=as('inst@okstate.edu'),gone=as('gone@okstate.edu'),stranger=as('random@gmail.com');
+  const unverified=as('inst@okstate.edu',{email_verified:false});
+  const msft=as('inst@okstate.edu',{email_verified:false,firebase:{sign_in_provider:'microsoft.com'}});
+  const anon=env.unauthenticatedContext().firestore();
+  let n=0,bad=0;const t=async(name,p)=>{n++;try{await p;console.log('PASS',name)}catch(e){bad++;console.log('FAIL',name,e.message)}};
+  await t('stranger cannot read workspace',assertFails(getDoc(doc(stranger,'abetHubs/etde-main'))));
+  await t('signed-out cannot read',assertFails(getDoc(doc(anon,'abetHubs/etde-main'))));
+  await t('deactivated user cannot read',assertFails(getDoc(doc(gone,'abetHubs/etde-main'))));
+  await t('unverified password account cannot read',assertFails(getDoc(doc(unverified,'abetHubs/etde-main'))));
+  await t('Microsoft account (OSU tenant) can read',assertSucceeds(getDoc(doc(msft,'abetHubs/etde-main'))));
+  await t('instructor reads + writes old record before migration',assertSucceeds(setDoc(doc(inst,'abetHubs/etde-main'),{hubData:{grades:[]}})));
+  await t('old record is read-only after migration',assertFails(setDoc(doc(admin,'abetHubs/ws2'),{hubData:{}})));
+  await t('instructor writes a grade record',assertSucceeds(setDoc(doc(inst,'abetHubs/ws2/grades/g2'),{id:'g2'})));
+  await t('instructor deletes a grade record',assertSucceeds(deleteDoc(doc(inst,'abetHubs/ws2/grades/g2'))));
+  await t('instructor cannot change settings',assertFails(setDoc(doc(inst,'abetHubs/ws2/meta/settings'),{value:{programTarget:50}})));
+  await t('admin changes settings',assertSucceeds(setDoc(doc(admin,'abetHubs/ws2/meta/settings'),{value:{programTarget:80}})));
+  await t('instructor cannot write historical results',assertFails(setDoc(doc(inst,'abetHubs/ws2/historicalResults/h1'),{x:1})));
+  await t('admin writes historical results',assertSucceeds(setDoc(doc(admin,'abetHubs/ws2/historicalResults/h1'),{x:1})));
+  await t('instructor can add a collection name to _structure',assertSucceeds(updateDoc(doc(inst,'abetHubs/ws2/meta/_structure'),{collections:arrayUnion('newThing')})));
+  await t('instructor cannot change _structure version',assertFails(updateDoc(doc(inst,'abetHubs/ws2/meta/_structure'),{version:1})));
+  await t('instructor cannot create _structure (run migration)',assertFails(setDoc(doc(inst,'abetHubs/etde-main/meta/_structure'),{version:2})));
+  await t('stranger cannot write records',assertFails(setDoc(doc(stranger,'abetHubs/ws2/grades/x'),{id:'x'})));
+  await t('user reads own approval entry',assertSucceeds(getDoc(doc(inst,'hubUsers/inst@okstate.edu'))));
+  await t('stranger can read own (missing) entry',assertSucceeds(getDoc(doc(stranger,'hubUsers/random@gmail.com'))));
+  await t('instructor cannot read others entries',assertFails(getDoc(doc(inst,'hubUsers/admin@okstate.edu'))));
+  await t('instructor cannot approve themself as admin',assertFails(setDoc(doc(inst,'hubUsers/inst@okstate.edu'),{role:'admin',active:true})));
+  await t('stranger cannot add themself',assertFails(setDoc(doc(stranger,'hubUsers/random@gmail.com'),{role:'instructor',active:true})));
+  await t('admin adds a user',assertSucceeds(setDoc(doc(admin,'hubUsers/new@okstate.edu'),{role:'instructor',active:true})));
+  await t('admin cannot delete themself',assertFails(deleteDoc(doc(admin,'hubUsers/admin@okstate.edu'))));
+  await t('other top-level paths closed',assertFails(setDoc(doc(admin,'other/x'),{a:1})));
+  await env.cleanup();console.log(bad?`${bad}/${n} FAILED`:`ALL ${n} RULES TESTS PASSED`);process.exit(bad?1:0);
+})().catch(e=>{console.error(e);process.exit(1)});

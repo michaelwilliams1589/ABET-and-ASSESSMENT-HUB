@@ -106,5 +106,5 @@ function markArchiveButton(){
  const b=document.getElementById("downloadSemesterArchive");
  if(b)b.addEventListener("click",()=>localStorage.setItem("etdeSemesterArchiveCreated","yes"));
 }
-document.addEventListener("DOMContentLoaded",()=>setTimeout(()=>{addCoach();renderDashboardGuidance();renderHelpCenter();markArchiveButton()},1300));
+window.onHubReady(()=>{addCoach();renderDashboardGuidance();renderHelpCenter();markArchiveButton()});
 })();

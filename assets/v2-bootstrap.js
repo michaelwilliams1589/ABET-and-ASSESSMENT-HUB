@@ -31,6 +31,7 @@
   window.v2NormalizeHubData=normalizeHubData;
 
   // Wrap the existing load function so old and incomplete workspace records are migrated safely.
+  const vEsc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
   const waitForFunctions=setInterval(()=>{
     if(typeof window.loadHub!=="function"||typeof window.saveHub!=="function")return;
     clearInterval(waitForFunctions);
@@ -80,11 +81,11 @@
         ["Version",VERSION],
         ["Signed In",window.currentUser?"Yes":"No"],
         ["Workspace",window.ABET_CONFIG?.workspaceId||"Unknown"]
-      ].map(([l,v])=>`<div class="metric"><strong>${v}</strong><span>${l}</span></div>`).join("");
-      document.getElementById("v2Diagnostics").innerHTML=rows.map(r=>`<div class="admin-row"><strong>${r.ok?"✓":"✗"} ${r.name}</strong><br>${r.detail}</div>`).join("");
+      ].map(([l,v])=>`<div class="metric"><strong>${vEsc(v)}</strong><span>${vEsc(l)}</span></div>`).join("");
+      document.getElementById("v2Diagnostics").innerHTML=rows.map(r=>`<div class="admin-row"><strong>${r.ok?"✓":"✗"} ${vEsc(r.name)}</strong><br>${vEsc(r.detail)}</div>`).join("");
       const counts={};
       COLLECTIONS.forEach(k=>counts[k]=Array.isArray(window.hub?.[k])?window.hub[k].length:0);
-      document.getElementById("v2CollectionCounts").innerHTML='<div class="table-wrap"><table class="table"><tr><th>Collection</th><th>Records</th></tr>'+Object.entries(counts).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("")+"</table></div>";
+      document.getElementById("v2CollectionCounts").innerHTML='<div class="table-wrap"><table class="table"><tr><th>Collection</th><th>Records</th></tr>'+Object.entries(counts).map(([k,v])=>`<tr><td>${vEsc(k)}</td><td>${vEsc(v)}</td></tr>`).join("")+"</table></div>";
     };
     document.getElementById("v2RunDiagnostics").onclick=run;
     document.getElementById("v2ExportBackup").onclick=()=>{
@@ -105,11 +106,11 @@
         document.getElementById("v2BackupStatus").innerHTML='<div class="notice success">Backup restored successfully. Refreshing…</div>';
         setTimeout(()=>location.reload(),800);
       }catch(err){
-        document.getElementById("v2BackupStatus").innerHTML=`<div class="notice warning">Restore failed: ${String(err.message||err)}</div>`;
+        document.getElementById("v2BackupStatus").innerHTML=`<div class="notice warning">Restore failed: ${vEsc(err.message||err)}</div>`;
       }
     };
     run();
   }
 
-  document.addEventListener("DOMContentLoaded",()=>setTimeout(renderHealth,1200));
+  window.onHubReady(renderHealth);
 })();
