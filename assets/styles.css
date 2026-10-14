@@ -78,3 +78,60 @@ body[data-version="2"] .topbar{box-shadow:0 2px 12px rgba(0,0,0,.08)}
 .step-list>li:before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:#c3502a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
 .legend span{display:inline-block;margin-right:12px;padding:2px 8px;border-radius:4px}
 .error.success{color:#1b6b2b;background:#e3f4e6;border-color:#9fd3a9}
+
+/* ===== v5.4 simplified look: one type scale, one spacing scale, one button style ===== */
+:root{--orange:#fe5c00;--orange-dark:#a63c00;--muted:#4b5563;--line:#d6dae0;--paper:#f5f6f8;--radius:10px;--gap:16px}
+body{font-size:16px;line-height:1.5;color:#1a1a1a}
+main{padding:24px 28px;max-width:1200px}
+.brand h1{font-size:1.1rem}.brand p{color:#4b5563}
+.page-title{margin-bottom:8px}.page-title h2{font-size:1.6rem;margin:0 0 4px}
+.page-purpose{margin:0 0 6px;color:#374151;font-size:1rem;max-width:760px}
+.card{border-radius:var(--radius);padding:20px;margin:0 0 var(--gap);box-shadow:none}
+.card h3{margin:0 0 10px;font-size:1.15rem}.card h4{margin:14px 0 8px}
+.next-step{margin:0 0 var(--gap)}
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--gap)}.two-col>.card{margin:0}
+.label-sm{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#4b5563;margin:14px 0 4px}
+/* buttons: orange = the main action, white = everything else, red = deletes */
+.btn{border-radius:8px;padding:10px 16px;font-weight:700;font-size:.95rem;line-height:1.2;border:1px solid transparent;cursor:pointer}
+.btn.primary{background:var(--orange);color:#111;border-color:var(--orange)}
+.btn.primary:hover{background:#e65300}
+.btn.outline,.btn.secondary{background:#fff;color:#1a1a1a;border:1px solid #9aa3ad}
+.btn.outline:hover,.btn.secondary:hover{background:#f1f3f5}
+.btn.danger{background:#fff;color:#a4161a;border:1px solid #a4161a}.btn.danger:hover{background:#fdecec}
+.btn:focus-visible,.navlink:focus-visible,.tab:focus-visible,summary:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
+.actions{gap:10px;margin-top:14px}
+/* readable text everywhere */
+.muted,.choice span,.table small{color:var(--muted)}
+.so-grid td.na{color:#555}
+.checklist-row a{color:var(--orange-dark)}
+.eyebrow{color:#ffb380 !important;letter-spacing:.06em}
+/* side menu */
+aside{padding:14px 10px}
+.navlink{color:#fff;font-weight:600;padding:10px 12px;margin:2px 0}
+.navlink.active{background:var(--orange);color:#111}
+.navlink:hover:not(.active){background:rgba(255,255,255,.12);color:#fff}
+.nav-advanced summary{color:#fff !important;opacity:1}
+.nav-advanced .navlink{font-size:.93rem;padding-left:20px;color:#e5e7eb}
+/* "More options" and collapsible sections */
+.more-options{margin:0 0 var(--gap);border:1px dashed #9aa3ad;border-radius:var(--radius);background:#fff}
+.more-options>summary{cursor:pointer;padding:12px 16px;font-weight:700;color:#1a1a1a;list-style:none}
+.more-options>summary::before,.section-toggle>summary::before{content:"▸ ";color:var(--orange-dark)}
+.more-options[open]>summary::before,.section-toggle[open]>summary::before{content:"▾ "}
+.more-options>summary::-webkit-details-marker,.section-toggle>summary::-webkit-details-marker{display:none}
+.more-body{padding:0 16px 16px}
+.card .more-options{margin:14px 0 0}
+.section-toggle>summary{cursor:pointer;list-style:none}.section-toggle>summary .muted{font-weight:400}
+.section-toggle[open]>summary{margin-bottom:12px}
+/* uploads: the usual choice stands out */
+.choice{border-left-width:5px;min-height:96px}.choice-main{grid-column:1/-1;border:2px solid var(--orange);border-left-width:8px;background:#fff8f2}
+.choice-main strong{font-size:1.15rem}
+/* tabs (Outcomes page) */
+.tab-bar{display:flex;flex-wrap:wrap;gap:4px;border-bottom:2px solid var(--line);margin:8px 0 var(--gap)}
+.tab{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:10px 14px;font-weight:700;color:#374151;cursor:pointer}
+.tab.active{border-bottom-color:var(--orange);color:#111}.tab:hover{color:#111;background:#f1f3f5}
+/* sign-in */
+.divider-text{text-align:center;margin:10px 0 4px}
+/* page help button: smaller, out of the way */
+.page-coach-button{padding:8px 14px !important;font-size:.9rem !important;opacity:.95}
+@media(max-width:700px){main{padding:14px}.two-col{grid-template-columns:1fr}}
+.page-coach-button{background:#fff !important;color:#1a1a1a !important;border:1px solid #9aa3ad !important;font-weight:700 !important}

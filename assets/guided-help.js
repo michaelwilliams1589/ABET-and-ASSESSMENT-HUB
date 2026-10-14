@@ -67,6 +67,7 @@ function renderDashboardGuidance(){
  const check=document.getElementById("guidedSemesterChecklist");
  if(check)check.innerHTML=r.items.map(x=>`<div class="checklist-row"><span>${x[1]?"☑":"☐"} ${hEsc(x[0])}</span><a href="${x[2]}">${x[1]?"Review":"Complete"}</a></div>`).join("");
 }
+window.startGuidedTour=()=>startWizard();
 function startWizard(){
  const steps=[
   {title:"1. Confirm Your Semester",text:"Open Syllabus & Semester and verify your current courses and sections.",href:"syllabus-engine.html"},
@@ -106,5 +107,5 @@ function markArchiveButton(){
  const b=document.getElementById("downloadSemesterArchive");
  if(b)b.addEventListener("click",()=>localStorage.setItem("etdeSemesterArchiveCreated","yes"));
 }
-window.onHubReady(()=>{addCoach();renderDashboardGuidance();renderHelpCenter();markArchiveButton()});
+window.onHubReady(()=>{const t=document.getElementById("startGuidedTour");if(t)t.onclick=startWizard;addCoach();renderDashboardGuidance();renderHelpCenter();markArchiveButton()});
 })();

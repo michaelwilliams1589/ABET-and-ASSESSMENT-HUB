@@ -69,6 +69,7 @@ function legacyHub(){
   check(await ap.evaluate(()=>HubStore.mode==='legacy'&&hub.grades.length===300),'admin lands on Dashboard; old record read (legacy mode, 300 grades)');
   // 4. migration
   await ap.goto(BASE+'system-health.html');await ap.waitForFunction(()=>window.__hubReady);
+  await ap.click('.more-options > summary'); // the upgrade lives under More options
   const [dl]=await Promise.all([ap.waitForEvent('download',{timeout:60000}),ap.click('#runMigration')]);
   const bpath='/tmp/premigration.json';await dl.saveAs(bpath);const backup=JSON.parse(fs.readFileSync(bpath,'utf8'));
   check(backup.kind==='pre-migration-backup'&&backup.data.grades.length===300&&backup.data.legacyField==='keep-me','backup downloaded with full old data');
