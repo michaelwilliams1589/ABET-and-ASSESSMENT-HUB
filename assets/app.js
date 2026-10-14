@@ -255,9 +255,9 @@ function renderDashboard(){
   $("dashboardCycle").innerHTML=`<strong>Year ${c.year} of 6 — ${ay(c.cur)}</strong><p>${themes[c.year-1]} phase</p>`;
   const due=scheduledCodes(c.year).filter(x=>!hasEvidence(x));
   $("dashboardDue").innerHTML=due.length?due.map(x=>`<span class="badge warn">${esc(x)}</span>`).join(" "):'<span class="badge good">All scheduled evidence received</span>';
-  if(issues.length){$("nextStepTitle").textContent=`Correct ${issues.length} upload routing issue${issues.length===1?"":"s"}`;$("nextStepText").textContent="Administrator review is needed.";$("nextStepButton").href="admin.html"}
-  else if(unapproved.length){$("nextStepTitle").textContent=`Review ${unapproved.length} assessment result${unapproved.length===1?"":"s"}`;$("nextStepText").textContent="Review the summary and approve the narrative.";$("nextStepButton").href="results.html"}
-  else{$("nextStepTitle").textContent="Upload the next assessment";$("nextStepText").textContent="The Hub will route it to the correct course and section.";$("nextStepButton").href="uploads.html"}
+  if(issues.length){$("nextStepTitle").textContent=`Correct ${issues.length} upload routing issue${issues.length===1?"":"s"}`;$("nextStepText").textContent="An administrator needs to fix these on the Administration page.";$("nextStepButton").href="admin.html"}
+  else if(unapproved.length){$("nextStepTitle").textContent=`Review ${unapproved.length} assessment result${unapproved.length===1?"":"s"}`;$("nextStepText").textContent="Read each summary and click Approve.";$("nextStepButton").href="results.html"}
+  else{$("nextStepTitle").textContent="Upload the next assessment";$("nextStepText").textContent="Upload your Canvas grades. The Hub files them for you.";$("nextStepButton").href="uploads.html"}
 }
 
 function initUploads(){

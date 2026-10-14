@@ -7,28 +7,27 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="assets/config.js"></script><script src="assets/curriculum-data.js"></script><script src="assets/syllabus-data.js"></script><script src="assets/abet-assignment-mapping.js"></script><script src="assets/data-store.js"></script><script src="assets/app.js"></script><script src="assets/v2-bootstrap.js"></script><script src="assets/help-data.js"></script><script src="assets/guided-help.js"></script><script src="assets/v3-enterprise.js"></script><script src="assets/v4-enterprise.js"></script><script src="assets/v4-mapping.js"></script><script src="assets/v5-core.js"></script><script src="assets/assessment-schedule-data.js"></script><script src="assets/historical-seed.js"></script><script src="assets/v52-features.js"></script><script src="assets/v53-admin.js"></script>
 </head><body data-version="2">
-<header class="topbar"><div class="brand"><div class="brand-mark">INSTITUTE OF<br>TECHNOLOGY</div><div><h1>OSUIT ETDE Assessment &amp; Accreditation Hub</h1><p>Version 5.3 — Secure Sign-In</p></div></div><div class="userbar"><span data-user-role></span><span data-sync class="status"><span class="dot"></span> Connecting</span><span data-user-email></span><button class="btn secondary" data-action="logout">Sign Out</button></div></header>
-<div class="shell"><aside><a class="navlink" href="my-courses.html">✅ My Courses</a>
-<a class="navlink" href="dashboard.html">🏠 Dashboard</a>
-<a class="navlink" href="uploads.html">⬆️ Uploads</a>
-<a class="navlink" href="results.html">📊 Results</a>
-<a class="navlink" href="outcomes.html">🎯 Outcomes &amp; Improvement</a>
-<a class="navlink" href="reports.html">📄 Reports</a>
-<a class="navlink" href="help-center.html">❓ Help Center</a>
-<details class="nav-advanced" open><summary>Advanced tools</summary><a class="navlink" href="assessment-analytics.html">📈 Assessment Analytics</a>
-<a class="navlink" href="curriculum.html">🎓 Curriculum Planner</a>
-<a class="navlink" href="abet-assignment-mapping.html">🗺 ABET Assignment Mapping</a>
-<a class="navlink" href="syllabus-engine.html">📚 Syllabus &amp; Semester</a>
-<a class="navlink" href="calendar.html">📅 Assessment Calendar</a>
-<a class="navlink" href="meeting-notes.html">📝 Meeting Notes</a>
-<a class="navlink admin-only" href="admin.html">⚙️ Administration</a>
-<a class="navlink admin-only active" href="system-health.html">🩺 System Health</a>
-</details></aside><main>
-<div class="page-title"><div><h2>System Health &amp; Backup</h2><p class="muted">Verify Firebase, data structure, deployment files, and create a portable workspace backup.</p></div></div>
-<div class="grid" id="v2HealthMetrics"></div>
-<section class="card"><h3>Diagnostics</h3><div id="v2Diagnostics"></div><div class="actions"><button id="v2RunDiagnostics" class="btn primary">Run Diagnostics</button></div></section>
-<section class="card"><h3>Workspace Backup</h3><p>Export the complete Firestore workspace as a JSON backup before major changes.</p><div class="actions"><button id="v2ExportBackup" class="btn primary">Download Workspace Backup</button><label class="btn outline">Choose Backup to Restore<input id="v2RestoreFile" type="file" accept=".json" hidden></label><button id="v2RestoreBackup" class="btn danger">Restore Selected Backup</button></div><div id="v2BackupStatus"></div></section>
-<section class="card"><h3>Version 5 Stable Core</h3><div id="v5CoreHealth"></div></section><section class="card"><h3>Data Integrity Monitor</h3><div id="v4Integrity"></div><div class="actions"><button id="v4RunIntegrity" class="btn primary">Run Data Integrity Check</button></div></section><section class="card"><h3>Data Collections</h3><div id="v2CollectionCounts"></div></section>
-<section class="card admin-only"><h3>Storage Upgrade (one time)</h3><p>Moves the Hub from one big record to one record per upload, grade, action, and survey, so saves no longer overwrite each other and the size limit goes away. It downloads a backup first and leaves the old record untouched.</p>
-<div id="migrationStatus"></div><div class="actions"><button id="runMigration" class="btn primary">Back Up and Migrate</button></div><div id="migrationLog"></div></section>
+<header class="topbar"><div class="brand"><div class="brand-mark">INSTITUTE OF<br>TECHNOLOGY</div><div><h1>ETDE Assessment Hub</h1><p>Instrumentation &amp; Automation · ABET</p></div></div><div class="userbar"><span data-user-role></span><span data-sync class="status"><span class="dot"></span> Connecting</span><span data-user-email></span><button class="btn outline" data-action="logout">Sign out</button></div></header>
+<div class="shell"><aside><nav aria-label="Main"><a class="navlink" href="my-courses.html">My Courses</a>
+<a class="navlink" href="dashboard.html">Home</a>
+<a class="navlink" href="uploads.html">Upload Evidence</a>
+<a class="navlink" href="results.html">Review Results</a>
+<a class="navlink" href="outcomes.html">ABET Outcomes</a>
+<a class="navlink" href="reports.html">Reports</a>
+<a class="navlink" href="help-center.html">Help</a>
+<details class="nav-advanced" open><summary>Advanced tools</summary><a class="navlink" href="assessment-analytics.html">Analytics</a>
+<a class="navlink" href="curriculum.html">Curriculum Planner</a>
+<a class="navlink" href="abet-assignment-mapping.html">Assignment Mapping</a>
+<a class="navlink" href="syllabus-engine.html">Semester Setup</a>
+<a class="navlink" href="meeting-notes.html">Meeting Notes</a>
+<a class="navlink admin-only" href="admin.html">Administration</a>
+<a class="navlink admin-only active" href="system-health.html" aria-current="page">Backup &amp; Health</a>
+</details></nav></aside><main>
+<div class="page-title"><div><h2>Backup &amp; System Health</h2><p class="page-purpose">Download a backup of all Hub data. The other checks are for troubleshooting.</p></div></div>
+<section class="card"><h3>Backup</h3><p class="muted">Download a copy of everything in the Hub. Do this at the end of each semester and before big changes, and save it in OneDrive.</p><div class="actions"><button id="v2ExportBackup" class="btn primary">Download backup</button><label class="btn outline">Choose a backup file…<input id="v2RestoreFile" type="file" accept=".json" hidden></label><button id="v2RestoreBackup" class="btn danger">Restore it</button></div><div id="v2BackupStatus"></div></section>
+<details class="more-options"><summary>More options</summary><div class="more-body"><div class="grid" id="v2HealthMetrics"></div>
+<section class="card"><h3>Diagnostics</h3><div id="v2Diagnostics"></div><div class="actions"><button id="v2RunDiagnostics" class="btn outline">Run Diagnostics</button></div></section>
+<section class="card"><h3>Data check</h3><div id="v5CoreHealth"></div></section><section class="card"><h3>Broken links between records</h3><div id="v4Integrity"></div><div class="actions"><button id="v4RunIntegrity" class="btn outline">Run Data Integrity Check</button></div></section><section class="card"><h3>Data Collections</h3><div id="v2CollectionCounts"></div></section>
+<section class="card admin-only"><h3>Storage upgrade (one time, already done)</h3><p>Moves the Hub from one big record to one record per upload, grade, action, and survey, so saves no longer overwrite each other and the size limit goes away. It downloads a backup first and leaves the old record untouched.</p>
+<div id="migrationStatus"></div><div class="actions"><button id="runMigration" class="btn outline">Back Up and Migrate</button></div><div id="migrationLog"></div></section></div></details>
 </main></div></body></html>
