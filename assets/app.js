@@ -651,26 +651,34 @@ function applyOfficialAbetMatches(){
   if(typeof window.ensureAbetAssignmentMappings==="function")window.ensureAbetAssignmentMappings();
   if(typeof window.matchAbetAssignment!=="function")return;
   gradebookAssignments.forEach(a=>{
-    const match=window.matchAbetAssignment(gradebookCourseCode,a.name||a.header);
+    const matches=window.matchAbetAssignmentsAll?window.matchAbetAssignmentsAll(gradebookCourseCode,a.name||a.header):[window.matchAbetAssignment(gradebookCourseCode,a.name||a.header)].filter(Boolean);
+    const match=matches[0];
     if(match){
       a.officialMappingId=match.id;
+      a.officialMappingIds=matches.map(m=>m.id);
+      a.officialSloCodes=matches.map(m=>m.sloCode);
       a.officialAssignmentName=match.assignmentName;
       a.officialSloCode=match.sloCode;
-      a.sloId=sloIdFromCode(match.sloCode)||a.sloId;
+      a.sloId=a.directOutcomeEvidenceRequired?a.sloId:(sloIdFromCode(match.sloCode)||a.sloId);
       a.matchStatus="official";
+      // One 80/20 shared grade is not independent evidence of three individual outcomes.
+      // Import the total course assessment once, then use the ETDE3213 rubric for direct SO evidence.
+      if(matches.some(m=>m.assessmentKind==="final-project-rubric")){
+        a.sloId="";a.directOutcomeEvidenceRequired=true;
+      }
     }else a.matchStatus="unmatched";
   });
 }
 function showGradebookReview(){
   $("uploadFilePanel").classList.add("hidden");$("uploadReviewPanel").classList.remove("hidden");
   const defaultSlo=$("gradebookDefaultSlo")?.value||"";
-  gradebookAssignments.forEach(a=>{if(!a.sloId)a.sloId=defaultSlo});
+  gradebookAssignments.forEach(a=>{if(!a.sloId&&!a.directOutcomeEvidenceRequired)a.sloId=defaultSlo});
   const sloOptions=(hub.slos||[]).map(s=>`<option value="${esc(s.id)}">${esc([s.code,s.description].filter(Boolean).join(" — "))}</option>`).join("");
-  $("uploadReview").innerHTML=`<div class="notice success"><strong>${gradebookStudents.length} students and ${gradebookAssignments.length} score columns detected.</strong><br>Choose the assignments to import and verify each Student Outcome.</div>
+  $("uploadReview").innerHTML=`<div class="notice success"><strong>${gradebookStudents.length} students and ${gradebookAssignments.length} score columns detected.</strong><br>Choose the assignments to import and verify each Student Outcome. A shared Final Project Presentation grade imports as one course total; use Project Rubric for separate individual SO evidence.</div>
   <div class="form-grid"><label>Course Code<input id="gradebookCourseCode" value="${esc(gradebookCourseCode)}" placeholder="ETDE 1343"></label><label>Course Name<input id="gradebookCourseName" placeholder="Course title"></label><label>Section / CRN<input id="gradebookSection" value="${esc(gradebookSection)}"></label></div>
   <div class="table-wrap"><table class="table"><tr><th>Import</th><th>Assignment</th><th>ABET Match</th><th>Points Possible</th><th>Student Outcome / SLO</th><th>Usable Scores</th></tr>${gradebookAssignments.map((a,i)=>{
     const count=gradebookStudents.filter(s=>numericValue(s.sourceRow[a.header])!==null).length;
-    return`<tr><td><input type="checkbox" data-gb-index="${i}" data-gb-field="selected" ${a.selected?"checked":""}></td><td><input data-gb-index="${i}" data-gb-field="name" value="${esc(a.name)}"></td><td>${a.matchStatus==="official"?`<span class="badge good">${esc(a.officialSloCode)} — Official</span><br><small>${esc(a.officialAssignmentName)}</small>`:`<span class="badge warn">No official match</span>`}</td><td><input type="number" min="0.01" step="0.01" data-gb-index="${i}" data-gb-field="possible" value="${a.possible}"></td><td><select data-gb-index="${i}" data-gb-field="sloId"><option value="">Unmapped</option>${sloOptions}</select></td><td>${count}</td></tr>`
+    return`<tr><td><input type="checkbox" data-gb-index="${i}" data-gb-field="selected" ${a.selected?"checked":""}></td><td><input data-gb-index="${i}" data-gb-field="name" value="${esc(a.name)}"></td><td>${a.matchStatus==="official"?`<span class="badge good">${esc((a.officialSloCodes||[a.officialSloCode]).join(" + "))} — Recognized</span><br><small>${esc(a.officialAssignmentName)}</small>`:`<span class="badge warn">No official match</span>`}</td><td><input type="number" min="0.01" step="0.01" data-gb-index="${i}" data-gb-field="possible" value="${a.possible}"></td><td><select data-gb-index="${i}" data-gb-field="sloId"><option value="">${a.directOutcomeEvidenceRequired?"Course total only — enter individual SO evidence in Project Rubric":"Unmapped"}</option>${sloOptions}</select></td><td>${count}</td></tr>`
   }).join("")}</table></div>`;
   document.querySelectorAll("[data-gb-index]").forEach(control=>{
     const row=gradebookAssignments[Number(control.dataset.gbIndex)],field=control.dataset.gbField;
@@ -732,7 +740,7 @@ async function saveGradebookUpload(term,assessmentName){
       id:id("assignment"),courseId:course.id,courseCode:course.code,courseName:course.name,
       section:section||course.section||"",term,sloId:source.sloId||"",
       name:source.name||source.header,possible:Number(source.possible)||100,
-      sourceHeader:source.header,sourceUploadId:uploadId,officialMappingId:source.officialMappingId||"",officialSloCode:source.officialSloCode||"",createdAt:now(),createdBy:currentUser.email
+      sourceHeader:source.header,sourceUploadId:uploadId,officialMappingId:source.directOutcomeEvidenceRequired?"":(source.officialMappingId||""),officialMappingIds:source.officialMappingIds||[],officialSloCode:source.directOutcomeEvidenceRequired?"":(source.officialSloCode||""),directOutcomeEvidenceRequired:!!source.directOutcomeEvidenceRequired,createdAt:now(),createdBy:currentUser.email
     };
     hub.assignments.push(assignment);assignmentIds.push(assignment.id);
     for(const row of gradebookStudents){

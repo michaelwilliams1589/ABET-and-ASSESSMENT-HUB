@@ -160,18 +160,6 @@ window.ABET_ASSIGNMENT_MAPPING_SEED=[
     "active": true
   },
   {
-    "id": "map-slo3-etde3213",
-    "sloCode": "SLO 3",
-    "courseCode": "ETDE 3213",
-    "courseName": "Project Management & Engineering Economics",
-    "assignmentName": "Email Assignment",
-    "aliases": [
-      "Professional Email Assignment",
-      "Email"
-    ],
-    "active": true
-  },
-  {
     "id": "map-slo3-etde4112",
     "sloCode": "SLO 3",
     "courseCode": "ETDE 4112",
@@ -268,5 +256,90 @@ window.ABET_ASSIGNMENT_MAPPING_SEED=[
       "Individual Journals"
     ],
     "active": true
+  },
+  {
+    "courseCode": "ETDE 3213",
+    "courseName": "Project Management & Engineering Economics",
+    "assignmentName": "Final Project Presentation",
+    "aliases": [
+      "Final Project Presentation",
+      "Final Project Presentation Assessment",
+      "Group Presentation",
+      "Project Management Final Presentation",
+      "Final Project Group Presentation"
+    ],
+    "mappingVersion": "etde3213-final-presentation-v1",
+    "assessmentKind": "final-project-rubric",
+    "evidenceLevel": "individual-evidence-with-shared-group-context",
+    "active": true,
+    "status": "current",
+    "effectiveTerm": "Fall 2026",
+    "selectedBy": "Michael Williams",
+    "selectedOn": "2026-11-06",
+    "source": "OSUIT BT Instrumentation Engineering Technology Self-Study Report (June 20, 2025), Criterion 3; existing outcomes reaffirmed October 30 and November 12, 2025",
+    "id": "map-slo1-etde3213-final-presentation",
+    "sloCode": "SLO 1"
+  },
+  {
+    "courseCode": "ETDE 3213",
+    "courseName": "Project Management & Engineering Economics",
+    "assignmentName": "Final Project Presentation",
+    "aliases": [
+      "Final Project Presentation",
+      "Final Project Presentation Assessment",
+      "Group Presentation",
+      "Project Management Final Presentation",
+      "Final Project Group Presentation"
+    ],
+    "mappingVersion": "etde3213-final-presentation-v1",
+    "assessmentKind": "final-project-rubric",
+    "evidenceLevel": "individual-evidence-with-shared-group-context",
+    "active": true,
+    "status": "current",
+    "effectiveTerm": "Fall 2026",
+    "selectedBy": "Michael Williams",
+    "selectedOn": "2026-11-06",
+    "source": "OSUIT BT Instrumentation Engineering Technology Self-Study Report (June 20, 2025), Criterion 3; existing outcomes reaffirmed October 30 and November 12, 2025",
+    "id": "map-slo3-etde3213-final-presentation",
+    "sloCode": "SLO 3"
+  },
+  {
+    "courseCode": "ETDE 3213",
+    "courseName": "Project Management & Engineering Economics",
+    "assignmentName": "Final Project Presentation",
+    "aliases": [
+      "Final Project Presentation",
+      "Final Project Presentation Assessment",
+      "Group Presentation",
+      "Project Management Final Presentation",
+      "Final Project Group Presentation"
+    ],
+    "mappingVersion": "etde3213-final-presentation-v1",
+    "assessmentKind": "final-project-rubric",
+    "evidenceLevel": "individual-evidence-with-shared-group-context",
+    "active": true,
+    "status": "current",
+    "effectiveTerm": "Fall 2026",
+    "selectedBy": "Michael Williams",
+    "selectedOn": "2026-11-06",
+    "source": "OSUIT BT Instrumentation Engineering Technology Self-Study Report (June 20, 2025), Criterion 3; existing outcomes reaffirmed October 30 and November 12, 2025",
+    "id": "map-slo5-etde3213-final-presentation",
+    "sloCode": "SLO 5"
+  },
+  {
+    "id": "map-slo3-etde3213",
+    "sloCode": "SLO 3",
+    "courseCode": "ETDE 3213",
+    "courseName": "Project Management & Engineering Economics",
+    "assignmentName": "Email Assignment",
+    "aliases": [
+      "Professional Email Assignment",
+      "Email"
+    ],
+    "active": false,
+    "status": "historical",
+    "historicalReason": "Historical Email Assignment mapping retained for original records; replaced for new Final Project Presentation assessment beginning Fall 2026.",
+    "replacedBy": "map-slo3-etde3213-final-presentation",
+    "replacedOn": "2026-11-06"
   }
 ];
