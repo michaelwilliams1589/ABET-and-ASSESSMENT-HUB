@@ -22,7 +22,7 @@ function renderMappings(){
   const rows=hub.abetAssignmentMappings.filter(m=>m.active!==false&&(!slo||m.sloCode===slo)&&(!course||mappingMatchesCourse(m,course))&&(!q||norm(JSON.stringify(m)).includes(q)));
   host.innerHTML=rows.map(m=>`<div class="mapping-card">
   <div><span class="badge">${m.sloCode}</span><strong>${m.courseCode} — ${m.courseName||""}</strong></div>
-  <h4>${m.assignmentName}</h4>
+  <h4>${m.assignmentName}${m.assessmentKind==="final-project-rubric"?' <a href="project-rubric.html">Open rubric &amp; detailed mapping</a>':""}</h4>
   <p><strong>Recognized aliases:</strong> ${(m.aliases||[]).join(", ")||"None"}</p>
   ${(m.legacyCourseCodes||[]).length?`<p><strong>Legacy course code:</strong> ${m.legacyCourseCodes.join(", ")}</p>`:""}
   ${admin()?`<div class="actions"><button class="btn outline" data-edit-map="${m.id}">Edit</button><button class="btn danger" data-disable-map="${m.id}">Disable</button></div>`:""}
@@ -89,10 +89,19 @@ window.matchAbetAssignment=function(courseCode,assignmentName){
   ensureMappings();
   const a=norm(assignmentName);
   const mappings=ensureMappings();
-  return mappings.find(m=>{
+  const found=mappings.filter(m=>{
     if(m.active===false||!mappingMatchesCourse(m,courseCode))return false;
     const names=[m.assignmentName,...(m.aliases||[])].map(norm);
-    return names.some(n=>n&&(a===n||a.includes(n)||n.includes(a)));
-  })||null;
+    return names.some(n=>n&&(a===n||(n.length>=16&&a.includes(n))||(a.length>=16&&m.assessmentKind!=="final-project-rubric"&&n.includes(a))));
+  });
+  return found[0]||null;
+};
+window.matchAbetAssignmentsAll=function(courseCode,assignmentName){
+  ensureMappings();const a=norm(assignmentName);
+  return ensureMappings().filter(m=>{
+    if(m.active===false||!mappingMatchesCourse(m,courseCode))return false;
+    const names=[m.assignmentName,...(m.aliases||[])].map(norm);
+    return names.some(n=>n&&(a===n||(n.length>=16&&a.includes(n))||(a.length>=16&&m.assessmentKind!=="final-project-rubric"&&n.includes(a))));
+  });
 };
 })();

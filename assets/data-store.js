@@ -12,7 +12,7 @@
 const ADMIN_META=["settings","curriculum","roadmapSettings"];
 const ADMIN_COLLECTIONS=["abetAssignmentMappings","historicalResults"];
 const VOLATILE=new Set(["updatedAt","lastMigrationAt"]);
-const KNOWN_COLLECTIONS=["routedUploads","students","courses","slos","assignments","grades","qualitativeAssessments","qualitativeDocuments","qualitativeReviews","qualitativeNarratives","streamlinedNarratives","meetingNotes","formsMappings","currentAssignments","teachingHistory","syllabusLibrary","termDates","abetAssignmentMappings","deletedUploadTombstones","analyticsDeletionLog","improvementActions","peoSurveys","advisoryMeetings","historicalResults"];
+const KNOWN_COLLECTIONS=["routedUploads","students","courses","slos","assignments","grades","qualitativeAssessments","qualitativeDocuments","qualitativeReviews","qualitativeNarratives","streamlinedNarratives","meetingNotes","formsMappings","currentAssignments","teachingHistory","syllabusLibrary","termDates","abetAssignmentMappings","deletedUploadTombstones","analyticsDeletionLog","improvementActions","peoSurveys","advisoryMeetings","historicalResults","projectRubrics"];
 const BATCH=400;
 let snapshot={items:{},meta:{}};   // last state known to be in Firestore
 let mode="legacy";

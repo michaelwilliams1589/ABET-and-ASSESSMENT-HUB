@@ -78,3 +78,11 @@ body[data-version="2"] .topbar{box-shadow:0 2px 12px rgba(0,0,0,.08)}
 .step-list>li:before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:#c3502a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
 .legend span{display:inline-block;margin-right:12px;padding:2px 8px;border-radius:4px}
 .error.success{color:#1b6b2b;background:#e3f4e6;border-color:#9fd3a9}
+/* v5.5 Project Rubric */
+.pr-desc{font-weight:400;font-size:.85rem}.pr-pts{font-weight:800}.pr-proposed{border-left:6px solid var(--warn)}
+.pr-bar{display:grid;grid-template-columns:minmax(120px,1.3fr) 2fr minmax(70px,auto);gap:10px;align-items:center;margin:6px 0}
+.pr-bar-track{background:#eceff3;border-radius:6px;height:16px;overflow:hidden;display:block}.pr-bar-fill{background:var(--orange);height:100%;display:block}
+.pr-bar-val{font-weight:700;font-size:.9rem}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+#prStudents input{min-width:140px}
+@media(max-width:600px){.pr-bar{grid-template-columns:1fr}}
+@media print{aside,.topbar,.tab-bar,.actions,#prMsg,.page-title .actions{display:none!important}.pr-panel.hidden{display:none}details{display:block}details>*{display:block}.card{break-inside:avoid;border:1px solid #999}}

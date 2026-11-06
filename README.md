@@ -1,4 +1,4 @@
-# OSUIT ETDE Assessment & Accreditation Hub: User Guide (v5.3)
+# OSUIT ETDE Assessment & Accreditation Hub: User Guide (v5.5)
 
 A website for collecting ABET evidence in the Instrumentation & Automation program. Sign in with your faculty account, upload Canvas grades, and the Hub works out the student outcome (SO) results for the self-study.
 
@@ -24,6 +24,18 @@ Use **🎯 Outcomes & Improvement** in the menu:
 | **Settings** (admin) | The **individual threshold (70%)** and **program target (75%)** are set here, once. Analytics, reports, the Criterion 4 insert, and the semester closeout all use these values. You can also type in the PEO wording. |
 
 Other pages are under **Advanced tools** in the menu: Analytics, Curriculum Planner, ABET Assignment Mapping, Syllabus & Semester (where you assign instructors to courses each term, which drives My Courses), Calendar, Meeting Notes, Administration, and System Health (backups).
+
+## Project Rubric (ETDE 3213 final presentation)
+
+**Advanced tools → Project Rubric (ETDE 3213)** (also linked from My Courses). It follows the paper rubric in `assets/documents/ETDE-3213-Final-Project-Group-Rubric.pdf` (open it from the page).
+
+- **Score a team:** team, project, date, term. Rate each group category 1–5 (or 0 = no evidence); the points come from the rubric's conversion table (max 5: 1-2-3-4-5, max 8: 2-3-5-6-8, max 10: 2-4-6-8-10, max 12: 2-5-7-10-12). Group total out of 80 is shared by the team. Add any number of students (5 rows to start) and give each 0–5 for Contribution, Project Knowledge, Presentation, and Accountability & Teamwork. Final = group + individual, out of 100.
+- **Saved teams:** open a team to change it, or delete it. Each team is its own record (`projectRubrics` collection), so saving one never touches another or any other Hub data.
+- **Reports & graphs:** students at or above the Hub's threshold (Settings, 70%), average points per category, group score by date, and a CSV (one row per student per outcome). Direct outcome evidence, review state, and historical proposed evidence are identified separately.
+- **Current outcome mapping:** Final Project Presentation → **SO 1, SO 3, SO 5**, effective Fall 2026. The previous Email Assignment → SO 3 mapping stays inactive for historical interpretation. After deploy, an administrator uses **Outcome mapping → Use final-presentation mapping for this workspace** once for existing saved data; this changes only the Project Management mapping and does not overwrite other mappings, grades, or meetings.
+- **Direct individual evidence:** enter each named student's Technical, Communication, and Teamwork rating (0–5) and a short observation of technical explanation, speech/questions, or role/leadership. The group grade is supporting context, never individual attainment by itself. Save the team, then faculty-review the saved evidence before it enters official outcome results. Any subsequent evidence edit returns the team to review-needed. Historical proposed entries remain excluded and are not upgraded automatically.
+- **Attainment:** the program threshold is 70%, so a direct rating of 4 or 5 meets it; 3/5 is 60%. The program target is 75% of students assessed meeting the threshold. Reviewed totals are grouped by the teams' terms/academic years. A shared Canvas total imports as a course total, not three direct outcomes. WBS, Gantt, BOM, and economics remain course evidence without invented SOs/PIs.
+- **Mapping documents:** **Outcome mapping** links the printable [ETDE 3213 outcome mapping](assets/documents/ETDE-3213-Outcome-Mapping.html) and [November 6, 2026 approval minutes](assets/documents/ETDE-3213-Mapping-Meeting-Minutes-2026-11-06.html). The minutes record Michael Williams, Darrel, Matthew, Carlos, Amanda, and Paula; Michael's motion carried unanimously. **Save minutes to Meeting Notes** requires a confirmation and adds one stable note without duplication or changes to prior records.
 
 ## Who can get in
 
@@ -55,6 +67,7 @@ Open http://localhost:8000/. It signs in to the same Firebase project as the liv
 
 - Before the upgrade, data lives in one Firestore document, `abetHubs/etde-main` (field `hubData`). v5.2 only **adds** fields: `improvementActions`, `peoSurveys`, `advisoryMeetings`, `historicalResults`, `settings.peoList`, and `settings.programTarget`/`sloThreshold`. Older data loads unchanged.
 - To rebuild the historical seed and schedule after the spreadsheets change: `python3 tools/build_seed.py "/path/to/ABET files"`.
+- Project Rubric test (scoring math, saving, reopening, reports, CSV, no overwrites): with the server on 8765, `node tools/project-rubric-test.js`.
 - Smoke test with Firebase mocked: start the server above on port 8765, then `npm i playwright && node tools/smoke-test.js`.
 - SheetJS 0.20.3 and JSZip are served from `assets/vendor/`, not a CDN.
 - Known limit after the upgrade: if two people edit the *same* record at the same moment, the later save wins for that one record.

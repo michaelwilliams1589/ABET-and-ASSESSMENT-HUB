@@ -59,14 +59,31 @@ function allResults(){
   ensureV52();
   const {threshold}=hubSettings(),out=[];
   (hub.assignments||[]).forEach(a=>{
-    const so=soOfAssignment(a);if(!so)return;
+    const so=soOfAssignment(a);if(!so||a.directOutcomeEvidenceRequired)return;
     const st=assessmentStats(a,threshold);if(!st.assessed)return;
     const course=assignmentCourse(a);
     out.push({so,academicYear:termToAY(a.term),term:a.term||"",courseCode:normCode(course.code),tool:assignmentName(a),assessed:st.assessed,met:st.met,source:"Hub gradebook upload"});
   });
+  // Direct SO evidence from ETDE3213 is counted only after its own faculty review.
+  // Existing proposed scores and shared gradebook totals never enter these results.
+  // Group reviewed rubric stats by academic year from each team's term; teams without a
+  // parseable term are deliberately excluded so totals are not repeated across years.
+  if(window.ProjectMapping){
+    const rows=(hub.projectRubrics||[]).filter(r=>window.ProjectMapping.isOfficial(r));
+    const byYear={};
+    rows.forEach(r=>{const ay=termToAY(r.term);if(!ay)return;(byYear[ay]||=[]).push(r)});
+    Object.entries(byYear).forEach(([academicYear,yearRows])=>{
+      Object.entries(window.ProjectMapping.stats(yearRows,true)).forEach(([so,st])=>{
+        if(!st.assessed)return;
+        const terms=[...new Set(yearRows.filter(r=>namedStudentEvidence(r,so)).map(r=>r.term).filter(Boolean))];
+        out.push({so,academicYear,term:terms.join(", "),courseCode:"ETDE 3213",tool:"Final Project Presentation — reviewed individual ratings",assessed:st.assessed,met:st.met,source:"ETDE 3213 Project Rubric (faculty reviewed)"});
+      });
+    });
+  }
   hub.historicalResults.forEach(h=>out.push({...h,courseCode:normCode(h.courseCode),historical:true}));
   return out;
 }
+function namedStudentEvidence(r,so){const key=window.ProjectMapping.OUTCOMES.find(o=>o.so===so)?.key;return (r.students||[]).some(s=>String(s.name||"").trim()&&s.abet?.[key]!==null&&s.abet?.[key]!==undefined&&s.abet?.[key]!=="")}
 function summarize(){
   const {target}=hubSettings(),res=allResults(),cur=ayStart(currentAY());
   const years=new Set([currentAY()]);
@@ -367,9 +384,9 @@ function renderMyCourses(){
     const complete=req.length&&done===req.length;
     return `<section class="card"><h3>${complete?"✅":"⬜"} ${H(a.courseCode)} — ${H(a.courseName||"")}${a.section?` <small>Section ${H(a.section)}</small>`:""}</h3>
     ${req.length?`<p><strong>${done} of ${req.length} done this term.</strong></p>${req.map(r=>`<div class="requirement-item"><span>${H(r.label)}</span><span class="badge ${requirementDone(a,r)?"good":"warn"}">${requirementDone(a,r)?"Done":"To do"}</span></div>`).join("")}`:'<p class="notice success">No ABET evidence is scheduled for this course this term. Nothing to do.</p>'}
-    ${maps.length?`<p class="muted">Look for this in your Canvas gradebook: ${maps.map(m=>`<strong>${H(m.assignmentName)}</strong> (${H(m.sloCode)})`).join(", ")}</p>`:""}
+    ${maps.length?`<p class="muted">Assessment mapped from Canvas: ${maps.map(m=>`<strong>${H(m.assignmentName)}</strong> (${H(m.sloCode)})`).join(", ")}</p>`:""}
     ${req.some(r=>r.type==="quantitative"&&!requirementDone(a,r))?`<a class="btn primary" href="uploads.html?type=gradebook&course=${encodeURIComponent(a.courseCode)}&term=${encodeURIComponent(a.term)}">Upload Canvas grades</a>`:""}
-    ${req.some(r=>r.type==="journals"&&!requirementDone(a,r))?` <a class="btn outline" href="uploads.html?type=journals&term=${encodeURIComponent(a.term)}">Upload journals</a>`:""}
+    ${req.some(r=>r.type==="project-rubric")||normCode(a.courseCode)==="ETDE 3213"?`<p><a class="btn primary" href="project-rubric.html">Enter final presentation scores</a></p><p class="muted">The team grade is 80 points plus 20 individual points. Direct SO 1, SO 3 and SO 5 evidence is entered per student and remains separate from the team grade. Official outcome use requires faculty review of the saved team.</p>`:""}${req.some(r=>r.type==="journals"&&!requirementDone(a,r))?` <a class="btn outline" href="uploads.html?type=journals&term=${encodeURIComponent(a.term)}">Upload journals</a>`:""}
     ${req.some(r=>r.type==="employer"&&!requirementDone(a,r))?` <a class="btn outline" href="uploads.html?type=microsoft-forms&term=${encodeURIComponent(a.term)}">Upload employer evaluations</a>`:""}
     </section>`}).join("");
 }
@@ -384,6 +401,39 @@ function applyUploadLink(){
 }
 /* Reports page: show saved threshold/target instead of fixed 70/75. */
 function applyReportDefaults(){const st=hubSettings();if(el("insertThreshold"))el("insertThreshold").value=st.threshold;if(el("insertTarget"))el("insertTarget").value=st.target}
+
+/* ETDE 3213: My Courses / semester requirements use reviewed Project Rubric evidence for the
+   matching academic year, not a Canvas gradebook quantitative upload. Other courses unchanged. */
+(function patchProjectRubricRequirements(){
+  const origReq=window.requirementsForAssignment,origDone=window.requirementDone;
+  if(typeof origReq!=="function"||typeof origDone!=="function")return;
+  window.requirementsForAssignment=function(a){
+    if(normCode(a.courseCode)!=="ETDE 3213")return origReq(a);
+    const cycle=typeof currentCycleYearNumber==="function"?currentCycleYearNumber():1;
+    const scheduled=[];
+    Object.entries(hub.curriculum?.schedule||{}).forEach(([so,years])=>{if((years[cycle]||[]).includes(a.courseCode))scheduled.push(so)});
+    const req=[];
+    if(scheduled.length){
+      req.push({label:`Final Project Presentation — faculty-reviewed individual evidence for ${scheduled.join(", ")}`,type:"project-rubric"});
+      req.push({label:"Faculty review and approved narrative",type:"review"});
+    }
+    return req;
+  };
+  window.requirementDone=function(a,r){
+    if(r.type==="project-rubric"){
+      if(!window.ProjectMapping)return false;
+      const ay=termToAY(a.term);
+      const rows=(hub.projectRubrics||[]).filter(rec=>{
+        if(!window.ProjectMapping.isOfficial(rec))return false;
+        const ray=termToAY(rec.term);
+        if(ay)return ray===ay;
+        return !a.term||rec.term===a.term;
+      });
+      return rows.length>0;
+    }
+    return origDone(a,r);
+  };
+})();
 
 window.v52=Object.assign(window.v52||{},{termToAY,soFromText,summarize,allResults,summarizeSurvey,likertValue,tableResults,tableSoCourse,tablePeoSo,exportXlsx,exportDocx});
 onHubReady(()=>{
