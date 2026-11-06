@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Project Rubric (ETDE 3213)</title><link rel="stylesheet" href="assets/styles.css"><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="assets/vendor/jszip.min.js"></script>
+<script src="assets/vendor/xlsx.full.min.js"></script>
+<script src="assets/config.js"></script><script src="assets/curriculum-data.js"></script><script src="assets/syllabus-data.js"></script><script src="assets/abet-assignment-mapping.js"></script><script src="assets/data-store.js"></script><script src="assets/app.js"></script><script src="assets/v2-bootstrap.js"></script><script src="assets/help-data.js"></script><script src="assets/guided-help.js"></script><script src="assets/v3-enterprise.js"></script><script src="assets/v4-enterprise.js"></script><script src="assets/v4-mapping.js"></script><script src="assets/v5-core.js"></script><script src="assets/assessment-schedule-data.js"></script><script src="assets/historical-seed.js"></script><script src="assets/v52-features.js"></script><script src="assets/v53-admin.js"></script><script src="assets/project-rubric.js"></script></head><body data-version="2"><header class="topbar">
+<div class="brand"><div class="brand-mark">INSTITUTE OF<br>TECHNOLOGY</div><div><h1>OSUIT ETDE Assessment &amp; Accreditation Hub</h1><p>Version 5.3 — Secure Sign-In</p></div></div>
+<div class="userbar"><span data-user-role></span><span data-sync class="status"><span class="dot"></span> Connecting</span><span data-user-email></span><button class="btn secondary" data-action="logout">Sign Out</button></div>
+</header><div class="shell"><aside><a class="navlink" href="my-courses.html">✅ My Courses</a>
+<a class="navlink" href="dashboard.html">🏠 Dashboard</a>
+<a class="navlink" href="uploads.html">⬆️ Uploads</a>
+<a class="navlink" href="results.html">📊 Results</a>
+<a class="navlink" href="outcomes.html">🎯 Outcomes &amp; Improvement</a>
+<a class="navlink" href="reports.html">📄 Reports</a>
+<a class="navlink" href="help-center.html">❓ Help Center</a>
+<details class="nav-advanced" open><summary>Advanced tools</summary><a class="navlink" href="assessment-analytics.html">📈 Assessment Analytics</a>
+<a class="navlink" href="curriculum.html">🎓 Curriculum Planner</a>
+<a class="navlink" href="abet-assignment-mapping.html">🗺 ABET Assignment Mapping</a>
+<a class="navlink" href="syllabus-engine.html">📚 Syllabus &amp; Semester</a>
+<a class="navlink" href="calendar.html">📅 Assessment Calendar</a>
+<a class="navlink" href="meeting-notes.html">📝 Meeting Notes</a>
+<a class="navlink active" href="project-rubric.html" aria-current="page">📋 Project Rubric (ETDE 3213)</a>
+<a class="navlink admin-only" href="admin.html">⚙️ Administration</a>
+<a class="navlink admin-only" href="system-health.html">🩺 System Health</a>
+</details></aside><main>
+<div class="page-title"><div><h2>Project Rubric: ETDE 3213 Final Presentation</h2><p class="page-purpose">Score each team's final presentation. Group score (80) + each student's individual score (20) = 100. The Hub does the math.</p></div>
+<div class="actions"><a class="btn outline" href="assets/documents/ETDE-3213-Final-Project-Group-Rubric.pdf" target="_blank" rel="noopener">Open the original rubric (PDF)</a></div></div>
+<div class="tab-bar" role="tablist"><button class="tab active" role="tab" aria-selected="true" data-pr-tab="score">Score a team</button><button class="tab" role="tab" aria-selected="false" data-pr-tab="teams">Saved teams</button><button class="tab" role="tab" aria-selected="false" data-pr-tab="reports">Reports &amp; graphs</button><button class="tab" role="tab" aria-selected="false" data-pr-tab="guide">Scoring guide</button></div>
+<div id="pr_score" class="pr-panel">
+<section class="card"><h3>1. Team</h3><div class="form-grid"><label>Team name<input id="prTeam" required></label><label>Project<input id="prProject"></label><label>Presentation date<input id="prDate" type="date"></label><label>Term<input id="prTerm" placeholder="e.g. Fall 2026"></label></div></section>
+<section class="card"><h3>2. Group score <span class="badge" id="prGroupBadge">0</span></h3><p class="muted">Pick a 1–5 rating for each category; the points fill in from the rubric's conversion table. Everyone on the team shares this score.</p>
+<div class="table-wrap"><table class="table"><thead><tr><th>Category</th><th>Max</th><th>Rating</th><th>Points</th></tr></thead><tbody id="prGroup"></tbody><tfoot><tr><th>Group total</th><td>80</td><td></td><td id="prGroupTotal"><strong>0 / 80</strong></td></tr></tfoot></table></div>
+<label>Group feedback<textarea id="prFeedback" rows="3"></textarea></label></section>
+<section class="card"><h3>3. Each student (0–5 per category)</h3><p class="muted">Add as many students as the team has. The Scoring guide tab explains each number.</p>
+<div class="table-wrap"><table class="table"><thead><tr><th>Student name</th><th>Contribution</th><th>Project Knowledge</th><th>Presentation</th><th>Accountability &amp; Teamwork</th><th>Individual /20</th><th>Final /100</th><th></th></tr></thead><tbody id="prStudents"></tbody></table></div>
+<div class="actions"><button id="prAddStudent" class="btn outline">+ Add student</button></div></section>
+<section class="card pr-proposed"><details><summary><strong>4. Optional: ABET evidence</strong> <span class="badge warn">PROPOSED · not approved</span></summary>
+<p class="notice warning">These areas are proposed, not verified OSUIT SO numbers. They don't change the course grade and are not added to ABET Outcomes or the self-study until they are matched to the bachelor program's approved Student Outcomes and performance indicators.</p>
+<div id="prAbetMap"></div>
+<div class="table-wrap"><table class="table"><thead><tr><th>Student</th><th>Technical (0–5)</th><th>Communication (0–5)</th><th>Teamwork (0–5)</th><th>Evidence / improvement note</th></tr></thead><tbody id="prAbetRows"></tbody></table></div></details></section>
+<div class="actions"><button id="prSave" class="btn primary">Save team</button><button id="prNew" class="btn outline">Start a new team</button><button id="prPrint" class="btn outline">Print this team</button></div><div id="prMsg" aria-live="polite"></div>
+</div>
+<div id="pr_teams" class="pr-panel hidden"><section class="card"><h3>Saved teams</h3><p class="muted">Open a team to review or change its scores.</p><div id="prList"></div></section></div>
+<div id="pr_reports" class="pr-panel hidden"><section class="card"><div class="form-grid"><label>Term<select id="prRepTerm"><option value="">All terms</option></select></label></div><div class="actions"><button id="prCsv" class="btn primary">Download CSV</button></div><p class="muted">The CSV has one row per student. Proposed ABET columns are labeled PROPOSED so they aren't mixed up with official SO results.</p></section><div id="prReports"></div></div>
+<div id="pr_guide" class="pr-panel hidden"><section class="card"><h3>Scoring guide</h3><div id="prGuide"></div></section></div>
+</main></div></body></html>

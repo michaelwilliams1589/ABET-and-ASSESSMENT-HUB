@@ -25,6 +25,15 @@ Use **🎯 Outcomes & Improvement** in the menu:
 
 Other pages are under **Advanced tools** in the menu: Analytics, Curriculum Planner, ABET Assignment Mapping, Syllabus & Semester (where you assign instructors to courses each term, which drives My Courses), Calendar, Meeting Notes, Administration, and System Health (backups).
 
+## Project Rubric (ETDE 3213 final presentation)
+
+**Advanced tools → Project Rubric (ETDE 3213)** (also linked from My Courses). It follows the paper rubric in `assets/documents/ETDE-3213-Final-Project-Group-Rubric.pdf` (open it from the page).
+
+- **Score a team:** team, project, date, term. Rate each group category 1–5 (or 0 = no evidence); the points come from the rubric's conversion table (max 5: 1-2-3-4-5, max 8: 2-3-5-6-8, max 10: 2-4-6-8-10, max 12: 2-5-7-10-12). Group total out of 80 is shared by the team. Add any number of students (5 rows to start) and give each 0–5 for Contribution, Project Knowledge, Presentation, and Accountability & Teamwork. Final = group + individual, out of 100.
+- **Saved teams:** open a team to change it, or delete it. Each team is its own record (`projectRubrics` collection), so saving one never touches another or any other Hub data.
+- **Reports & graphs:** students at or above the Hub's threshold (Settings, 70%), average points per category, group score by date, and a CSV (one row per student).
+- **ABET evidence (optional) is PROPOSED.** The technical / communication / teamwork ratings use the rubric's proposed areas, which are not verified OSUIT SO numbers. They are kept out of the course grade, ABET Outcomes, Reports, and the self-study tables, and every CSV column is labeled PROPOSED. Match them to the bachelor program's approved Student Outcomes and performance indicators before reporting them to ABET. The 3/5 line shown is the rubric's suggestion, not the program's approved threshold.
+
 ## Who can get in
 
 Only people on the **approved users** list (Administration → Approved Users) can open the Hub, and the Firebase security rules enforce this on the server. New faculty click **Request Faculty Access** on the sign-in page; an administrator adds them. Instructors can't change program settings, the official assignment mapping, or imported historical data. Those are for administrators.
@@ -55,6 +64,7 @@ Open http://localhost:8000/. It signs in to the same Firebase project as the liv
 
 - Before the upgrade, data lives in one Firestore document, `abetHubs/etde-main` (field `hubData`). v5.2 only **adds** fields: `improvementActions`, `peoSurveys`, `advisoryMeetings`, `historicalResults`, `settings.peoList`, and `settings.programTarget`/`sloThreshold`. Older data loads unchanged.
 - To rebuild the historical seed and schedule after the spreadsheets change: `python3 tools/build_seed.py "/path/to/ABET files"`.
+- Project Rubric test (scoring math, saving, reopening, reports, CSV, no overwrites): with the server on 8765, `node tools/project-rubric-test.js`.
 - Smoke test with Firebase mocked: start the server above on port 8765, then `npm i playwright && node tools/smoke-test.js`.
 - SheetJS 0.20.3 and JSZip are served from `assets/vendor/`, not a CDN.
 - Known limit after the upgrade: if two people edit the *same* record at the same moment, the later save wins for that one record.
